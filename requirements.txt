@@ -1,0 +1,4 @@
+bottle==0.13
+python-docx==0.8.11
+dotenv==0.19.1
+odfpy==1.4.1

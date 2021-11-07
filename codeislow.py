@@ -171,7 +171,7 @@ def do_upload():
     user_years = request.forms.get("user_years")
     # L'utilisateur upload son document, il est enregistré provisoirement
     upload = request.files.get("upload")
-    if not upload:
+    if upload is None:
         return "Pas de fichier"
     global name, ext
     name, ext = os.path.splitext(upload.filename)
