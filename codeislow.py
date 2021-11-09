@@ -112,8 +112,9 @@ main_codelist = {
     "CCIV": "Code civil",
     "CCOM": "Code de commerce",
     "CTRAV": "Code du travail",
-    "CPI" : "Code de la propriété intellectuelle",
-    "CPEN" : "Code pénal",
+    "CPI": "Code de la propriété intellectuelle",
+    "CPEN": "Code pénal",
+    "CPP": "Code de procédure pénale",
 }
 codes_API = {
     "CCIV": "LEGITEXT000006070721",
@@ -130,16 +131,11 @@ codes_API = {
 }
 
 reg_beginning = {
-    "CIVTYPE": r"(\d+-?\d*-?\d*)\s*(?:alinéa|al\.)?\s*\d*\s*"
-    r"(?:,\s*(\d+-?\d*-?\d*)\s*(?:alinéa|al\.)?\s*\d*\s*"
-    r"(?:,\s*(\d+-?\d*-?\d*)\s*(?:alinéa|al\.)?\s*\d*\s*"
-    r"(?:,\s*(\d+-?\d*-?\d*)\s*(?:alinéa|al\.)?\s*\d*\s*)*)*)*"
-    r"(?:et\s*(\d+-?\d*-?\d*)\s*(?:alinéa|al\.)?\s*\d*\s*)*",
-    "COMTYPE": r"((?:L\.?|R\.?|A\.?|D\.?)\s*\d+-?\d*-?\d*)\s*(?:alinéa|al\.)?\s*\d*\s*"
-    r"(?:,\s*((?:L\.?|R\.?|A\.?|D\.?)\s*\d+-?\d*-?\d*)\s*(?:alinéa|al\.)?\s*\d*\s*"
-    r"(?:,\s*((?:L\.?|R\.?|A\.?|D\.?)\s*\d+-?\d*-?\d*)\s*(?:alinéa|al\.)?\s*\d*\s*"
-    r"(?:,\s*((?:L\.?|R\.?|A\.?|D\.?)\s*\d+-?\d*-?\d*)\s*(?:alinéa|al\.)?\s*\d*\s*)*)*)*"
-    r"(?:et\s*((?:L\.?|R\.?|A\.?|D\.?)\s*\d+-?\d*-?\d*)\s*(?:alinéa|al\.)?\s*\d*\s*)*",
+    "UNIVERSAL": r"((?:L\.?|R\.?|A\.?|D\.?)?\s*\d+-?\d*-?\d*)\s*(?:alinéa|al\.)?\s*\d*\s*"
+    r"(?:,\s*((?:L\.?|R\.?|A\.?|D\.?)?\s*\d+-?\d*-?\d*)\s*(?:alinéa|al\.)?\s*\d*\s*"
+    r"(?:,\s*((?:L\.?|R\.?|A\.?|D\.?)?\s*\d+-?\d*-?\d*)\s*(?:alinéa|al\.)?\s*\d*\s*"
+    r"(?:,\s*((?:L\.?|R\.?|A\.?|D\.?)?\s*\d+-?\d*-?\d*)\s*(?:alinéa|al\.)?\s*\d*\s*)*)*)*"
+    r"(?:et\s*((?:L\.?|R\.?|A\.?|D\.?)?\s*\d+-?\d*-?\d*)\s*(?:alinéa|al\.)?\s*\d*\s*)*",
 }
 
 reg_ending = {
@@ -152,12 +148,12 @@ reg_ending = {
 }
 
 codes_regex = {
-    "CCIV": reg_beginning["CIVTYPE"] + reg_ending["CCIV"],
-    "CCOM": reg_beginning["COMTYPE"] + reg_ending["CCOM"],
-    "CTRAV": reg_beginning["COMTYPE"] + reg_ending["CTRAV"],
-    "CPI": reg_beginning["COMTYPE"] + reg_ending["CPI"],
-    "CPEN": reg_beginning["CIVTYPE"] + reg_ending["CPEN"],
-    "CPP": reg_beginning["CIVTYPE"] + reg_ending["CPP"],
+    "CCIV": reg_beginning["UNIVERSAL"] + reg_ending["CCIV"],
+    "CCOM": reg_beginning["UNIVERSAL"] + reg_ending["CCOM"],
+    "CTRAV": reg_beginning["UNIVERSAL"] + reg_ending["CTRAV"],
+    "CPI": reg_beginning["UNIVERSAL"] + reg_ending["CPI"],
+    "CPEN": reg_beginning["UNIVERSAL"] + reg_ending["CPEN"],
+    "CPP": reg_beginning["UNIVERSAL"] + reg_ending["CPP"],
 }
 
 code_results = {}
@@ -228,9 +224,7 @@ def do_upload():
     ).timestamp() * 1000
 
     for code in code_results:
-        yield "<p> " + "Analyse des textes du " + main_codelist[
-            code
-        ] + "... </p>"
+        yield "<p> " + "Analyse des textes du " + main_codelist[code] + "... </p>"
         for result in code_results[code]:
             donnees_article = trouve_article(idtext=codes_API[code], idarticle=result)
             if donnees_article is None:
