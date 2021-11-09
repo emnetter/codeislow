@@ -108,6 +108,7 @@ def epoch_to_date(epoch):
 
 # Initialisation du programme
 
+
 main_codelist = {
     "CCIV": "Code civil",
     "CCOM": "Code de commerce",
@@ -156,6 +157,7 @@ codes_regex = {
     "CPP": reg_beginning["UNIVERSAL"] + reg_ending["CPP"],
 }
 
+
 code_results = {}
 articles_not_found = []
 articles_recently_modified = []
@@ -164,6 +166,7 @@ articles_without_event = []
 
 for code in main_codelist:
     code_results[code] = []
+
 
 # Affichage de la page web d'accueil
 @route("/")
@@ -208,6 +211,17 @@ def do_upload():
 
     # Suppression du fichier utilisateur, devenu inutile
     os.remove(file_path)
+
+    # Réinitilisation des dictionnaires
+
+    code_results = {}
+    articles_not_found = []
+    articles_recently_modified = []
+    articles_changing_soon = []
+    articles_without_event = []
+
+    for code in main_codelist:
+        code_results[code] = []
 
     # Mise en oeuvre des expressions régulières
     paragraphs_to_test = paragraphs_selector(paragraphsdoc)
