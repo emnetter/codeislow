@@ -1,6 +1,27 @@
-
+<h1> "Code is low" V 0.1</h1>
+<h3> un programme expérimental par E. Netter </h3>
+<br>
+<br>
 <form action="/upload" method="post" enctype="multipart/form-data">
-<label>Alerter en cas de variation des textes sur une période de </label> <input type="text" name="user_years" value="1"> an(s) vers le passé et vers l'avenir<br>
+<label>Alerter en cas de variation des textes sur une période de </label> <input type="text" name="user_years" value="2"> an(s) vers le passé et vers l'avenir<br>
  <label> Choisissez un fichier (DOCX, ODT) : </label> <input type="file" name="upload" accept = ".docx, .odt"/>
   <input type="submit" value="Envoyez le fichier" />
 </form>
+<br>
+<br>
+<h3> Guide d'utilisation </h3>
+<p> Soumettez un texte au format DOCX ou ODT. Le programme recherchera des références à des articles de code. Il vous alertera : </p>
+	<ul>
+	<li> Si le texte est introuvable sur Légifrance(abrogé, faute de frappe...) </li>
+	<li> Si le texte a été récemment modifié (période définie par vous) </li>
+	<li> Si le texte va être modifié prochainement (période définie par vous) </li>
+	</ul>
+
+<h3> Codes actuellement testés : </h3>
+	<li> Code civil </li>
+    <li> Code de commerce </li>
+    <li> Code du travail </li>
+    <li> Code de la propriété intellectuelle </li>
+    <li> Code pénal </li>
+    <li> Code de procédure pénale </li>
+	
