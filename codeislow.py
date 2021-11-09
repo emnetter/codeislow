@@ -27,13 +27,15 @@ def paragraphs_selector(paragraphs):
 # Les paragraphes à tester sont confrontés aux expressions régulières de chaque code
 def text_detector(paragraphs_to_test):
     for code in main_codelist:
+        code_results[code] = []
+    for code in main_codelist:
         code_detecteur = re.compile(codes_regex[code], re.I)
         for paragraph in paragraphs_to_test:
             for element in paragraph:
                 results = code_detecteur.findall(element)
                 for group in results:
                     for match in group:
-                        if match != "" and match not in code_results[code]:
+                        if match != "" and reformat_results(match) not in code_results[code]:
                             code_results[code].append(reformat_results(match))
     return code_results
 
@@ -173,10 +175,22 @@ for code in main_codelist:
 def root():
     return static_file("index.html", root=".")
 
-
 # Actions à effectuer à l'upload du document de l'utilisateur
 @route("/upload", method="POST")
 def do_upload():
+
+    code_results = dict()
+    articles_not_found.clear()
+    articles_recently_modified.clear()
+    articles_changing_soon.clear()
+    articles_without_event.clear()
+
+    for code in main_codelist:
+        code_results[code] = []
+
+
+
+
     # L'utilisateur définit sur quelle période la validité de l'article est testée
     user_years = request.forms.get("user_years")
     # L'utilisateur upload son document, il est enregistré provisoirement
@@ -195,7 +209,7 @@ def do_upload():
 
     # Le document DOCX ou ODT est transformé en liste de paragraphes
     paragraphsdoc = []
-
+    print("paragraphsdocs", paragraphsdoc)
     yield "<h3> Début de l'analyse du texte. Veuillez patienter... </h3>"
 
     if ext == ".docx":
@@ -210,18 +224,9 @@ def do_upload():
             paragraphsdoc.append(teletype.extractText(texts[i]))
 
     # Suppression du fichier utilisateur, devenu inutile
+
     os.remove(file_path)
 
-    # Réinitilisation des dictionnaires
-
-    code_results = {}
-    articles_not_found = []
-    articles_recently_modified = []
-    articles_changing_soon = []
-    articles_without_event = []
-
-    for code in main_codelist:
-        code_results[code] = []
 
     # Mise en oeuvre des expressions régulières
     paragraphs_to_test = paragraphs_selector(paragraphsdoc)
