@@ -62,7 +62,7 @@ def reformat_results(result):
 
 # Authentification sur Légifrance à l'aide de secrets conservés dans .env
 def legifrance_auth():
-    TOKEN_URL = "https://sandbox-oauth.aife.economie.gouv.fr/api/oauth/token"
+    TOKEN_URL = "https://oauth.piste.gouv.fr/api/oauth/token"
 
     load_dotenv(find_dotenv())
     CLIENT_ID = os.environ.get("CLIENT_ID")
@@ -88,7 +88,7 @@ def trouve_article(idtext, idarticle):
     data = {"id": idtext, "num": idarticle}
 
     response = requests.post(
-        "https://sandbox-api.piste.gouv.fr/dila/legifrance-beta/"
+        "https://api.piste.gouv.fr/dila/legifrance-beta/"
         "lf-engine-app/consult/getArticleWithIdAndNum",
         headers=headers,
         json=data,
