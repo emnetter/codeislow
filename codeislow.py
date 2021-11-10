@@ -113,11 +113,15 @@ def epoch_to_date(epoch):
 
 main_codelist = {
     "CCIV": "Code civil",
+    "CPRCIV" : "Code de procédure civile",
     "CCOM": "Code de commerce",
     "CTRAV": "Code du travail",
     "CPI": "Code de la propriété intellectuelle",
     "CPEN": "Code pénal",
     "CPP": "Code de procédure pénale",
+    "CASSUR" : "Code des assurances",
+    "CCONSO" : "Code de la consommation",
+
 }
 codes_API = {
     "CCIV": "LEGITEXT000006070721",
@@ -131,6 +135,7 @@ codes_API = {
     "CPEN": "LEGITEXT000006070719",
     "CPP": "LEGITEXT000006071154",
     "CPI": "LEGITEXT000006069414",
+    "CASSUR" : "LEGITEXT000006073984"
 }
 
 reg_beginning = {
@@ -143,20 +148,26 @@ reg_beginning = {
 
 reg_ending = {
     "CCIV": r"\s*(?:du Code civil|C\. civ\.)",
+    "CPRCIV" : r"\s*(?:du Code de procédure civile|C\. pr\. civ\.|CPC|du CPC)",
     "CCOM": r"\s*(?:du Code de commerce|C\. com\.)",
     "CTRAV": r"\s*(?:du Code du travail|C\. trav\.)",
     "CPI": r"\s*(?:du Code de la propriété intellectuelle|CPI|C\. pr\. int\.|du CPI)",
     "CPEN": r"\s*(?:du Code pénal|C\. pén\.)",
     "CPP": r"\s*(?:du Code de procédure pénale|du CPP|CPP)",
+    "CASSUR" : r"\s*(?:du Code des assurances|C\. assur\.)",
+    "CCONSO" : r"\s*(?:du Code de la consommation|C\. conso\.)"
 }
 
 codes_regex = {
     "CCIV": reg_beginning["UNIVERSAL"] + reg_ending["CCIV"],
+    "CPRCIV" : reg_beginning["UNIVERSAL"] + reg_ending["CPRCIV"],
     "CCOM": reg_beginning["UNIVERSAL"] + reg_ending["CCOM"],
     "CTRAV": reg_beginning["UNIVERSAL"] + reg_ending["CTRAV"],
     "CPI": reg_beginning["UNIVERSAL"] + reg_ending["CPI"],
     "CPEN": reg_beginning["UNIVERSAL"] + reg_ending["CPEN"],
     "CPP": reg_beginning["UNIVERSAL"] + reg_ending["CPP"],
+    "CASSUR" : reg_beginning["UNIVERSAL"]+ reg_ending["CASSUR"],
+    "CCONSO" : reg_beginning["UNIVERSAL"] + reg_ending["CCONSO"],
 }
 
 
