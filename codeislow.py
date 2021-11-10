@@ -35,7 +35,10 @@ def text_detector(paragraphs_to_test):
                 results = code_detecteur.findall(element)
                 for group in results:
                     for match in group:
-                        if match != "" and reformat_results(match) not in code_results[code]:
+                        if (
+                            match != ""
+                            and reformat_results(match) not in code_results[code]
+                        ):
                             code_results[code].append(reformat_results(match))
     return code_results
 
@@ -113,15 +116,15 @@ def epoch_to_date(epoch):
 
 main_codelist = {
     "CCIV": "Code civil",
-    "CPRCIV" : "Code de procédure civile",
+    "CPRCIV": "Code de procédure civile",
     "CCOM": "Code de commerce",
     "CTRAV": "Code du travail",
     "CPI": "Code de la propriété intellectuelle",
     "CPEN": "Code pénal",
     "CPP": "Code de procédure pénale",
-    "CASSUR" : "Code des assurances",
-    "CCONSO" : "Code de la consommation",
-
+    "CASSUR": "Code des assurances",
+    "CCONSO": "Code de la consommation",
+    "CSI": "Code de la sécurité intérieure",
 }
 codes_API = {
     "CCIV": "LEGITEXT000006070721",
@@ -135,7 +138,8 @@ codes_API = {
     "CPEN": "LEGITEXT000006070719",
     "CPP": "LEGITEXT000006071154",
     "CPI": "LEGITEXT000006069414",
-    "CASSUR" : "LEGITEXT000006073984"
+    "CASSUR": "LEGITEXT000006073984",
+    "CSI": "LEGITEXT000025503132",
 }
 
 reg_beginning = {
@@ -148,26 +152,28 @@ reg_beginning = {
 
 reg_ending = {
     "CCIV": r"\s*(?:du Code civil|C\. civ\.)",
-    "CPRCIV" : r"\s*(?:du Code de procédure civile|C\. pr\. civ\.|CPC|du CPC)",
+    "CPRCIV": r"\s*(?:du Code de procédure civile|C\. pr\. civ\.|CPC|du CPC)",
     "CCOM": r"\s*(?:du Code de commerce|C\. com\.)",
     "CTRAV": r"\s*(?:du Code du travail|C\. trav\.)",
     "CPI": r"\s*(?:du Code de la propriété intellectuelle|CPI|C\. pr\. int\.|du CPI)",
     "CPEN": r"\s*(?:du Code pénal|C\. pén\.)",
     "CPP": r"\s*(?:du Code de procédure pénale|du CPP|CPP)",
-    "CASSUR" : r"\s*(?:du Code des assurances|C\. assur\.)",
-    "CCONSO" : r"\s*(?:du Code de la consommation|C\. conso\.)"
+    "CASSUR": r"\s*(?:du Code des assurances|C\. assur\.)",
+    "CCONSO": r"\s*(?:du Code de la consommation|C\. conso\.)",
+    "CSI": r"\s*(?:du Code de la sécurité intérieure|CSI|du CSI)"
 }
 
 codes_regex = {
     "CCIV": reg_beginning["UNIVERSAL"] + reg_ending["CCIV"],
-    "CPRCIV" : reg_beginning["UNIVERSAL"] + reg_ending["CPRCIV"],
+    "CPRCIV": reg_beginning["UNIVERSAL"] + reg_ending["CPRCIV"],
     "CCOM": reg_beginning["UNIVERSAL"] + reg_ending["CCOM"],
     "CTRAV": reg_beginning["UNIVERSAL"] + reg_ending["CTRAV"],
     "CPI": reg_beginning["UNIVERSAL"] + reg_ending["CPI"],
     "CPEN": reg_beginning["UNIVERSAL"] + reg_ending["CPEN"],
     "CPP": reg_beginning["UNIVERSAL"] + reg_ending["CPP"],
-    "CASSUR" : reg_beginning["UNIVERSAL"]+ reg_ending["CASSUR"],
-    "CCONSO" : reg_beginning["UNIVERSAL"] + reg_ending["CCONSO"],
+    "CASSUR": reg_beginning["UNIVERSAL"] + reg_ending["CASSUR"],
+    "CCONSO": reg_beginning["UNIVERSAL"] + reg_ending["CCONSO"],
+    "CSI" : reg_beginning["UNIVERSAL"] + reg_ending["CSI"],
 }
 
 
@@ -186,6 +192,7 @@ for code in main_codelist:
 def root():
     return static_file("index.html", root=".")
 
+
 # Actions à effectuer à l'upload du document de l'utilisateur
 @route("/upload", method="POST")
 def do_upload():
@@ -198,9 +205,6 @@ def do_upload():
 
     for code in main_codelist:
         code_results[code] = []
-
-
-
 
     # L'utilisateur définit sur quelle période la validité de l'article est testée
     user_years = request.forms.get("user_years")
@@ -220,7 +224,7 @@ def do_upload():
 
     # Le document DOCX ou ODT est transformé en liste de paragraphes
     paragraphsdoc = []
-    print("paragraphsdocs", paragraphsdoc)
+
     yield "<h3> Début de l'analyse du texte. Veuillez patienter... </h3>"
 
     if ext == ".docx":
@@ -238,9 +242,9 @@ def do_upload():
 
     os.remove(file_path)
 
-
     # Mise en oeuvre des expressions régulières
     paragraphs_to_test = paragraphs_selector(paragraphsdoc)
+
     code_results = text_detector(paragraphs_to_test)
     results_printer(code_results)
 
