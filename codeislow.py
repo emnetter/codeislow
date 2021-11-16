@@ -5,6 +5,7 @@ import docx
 import requests
 import json
 import datetime
+import time
 import os
 from dotenv import load_dotenv, find_dotenv
 from odf import text, teletype
@@ -87,20 +88,68 @@ def legifrance_auth():
     return access_token
 
 
-# Pour chaque article de code, Légifrance est interrogé et renvoie un dico JSON
-def trouve_article(idtext, idarticle):
-
-    data = {"id": idtext, "num": idarticle}
+# Recherche sur Légifrance de l'identifiant unique de l'article
+def get_article_id(article_number, code_name):
+    today = int(time.time() * 1000)
+    print("aujourd'hui : ", today)
+    data = {
+        "recherche": {
+            "champs": [
+                {
+                    "typeChamp": "NUM_ARTICLE",
+                    "criteres": [
+                        {
+                            "typeRecherche": "EXACTE",
+                            "valeur": article_number,
+                            "operateur": "ET",
+                        }
+                    ],
+                    "operateur": "ET",
+                }
+            ],
+            "filtres": [
+                {"facette": "NOM_CODE", "valeurs": [code_name]},
+                {"facette": "DATE_VERSION", "singleDate": today},
+            ],
+            "pageNumber": 1,
+            "pageSize": 10,
+            "operateur": "ET",
+            "sort": "PERTINENCE",
+            "typePagination": "ARTICLE",
+        },
+        "fond": "CODE_DATE",
+    }
 
     response = requests.post(
-        "https://api.piste.gouv.fr/dila/legifrance-beta/"
-        "lf-engine-app/consult/getArticleWithIdAndNum",
+        "https://api.piste.gouv.fr/dila/legifrance-beta/lf-engine-app/search",
         headers=headers,
         json=data,
     )
 
-    dico = json.loads(response.text)
-    return dico["article"]
+    # print(response.text)
+    article_informations = json.loads(response.text)
+    if not article_informations["results"]:
+        return None
+    else:
+        article_id = article_informations["results"][0]["sections"][0]["extracts"][0][
+            "id"
+        ]
+        # print("return sera ", article_id)
+        return article_id
+
+
+# A partir de l'identifiant unique, rapatriement du contenu de l'article
+def get_article_content(article_id):
+    data = {"id": article_id}
+
+    response = requests.post(
+        "https://api.piste.gouv.fr/dila/legifrance-beta/lf-engine-app/consult/getArticle",
+        headers=headers,
+        json=data,
+    )
+
+    article_dictionary = json.loads(response.text)
+    return article_dictionary["article"]
 
 
 # Légifrance utilise des dates au format Epoch qu'il faut convertir au format classique
@@ -160,7 +209,7 @@ reg_ending = {
     "CPP": r"\s*(?:du Code de procédure pénale|du CPP|CPP)",
     "CASSUR": r"\s*(?:du Code des assurances|C\. assur\.)",
     "CCONSO": r"\s*(?:du Code de la consommation|C\. conso\.)",
-    "CSI": r"\s*(?:du Code de la sécurité intérieure|CSI|du CSI)"
+    "CSI": r"\s*(?:du Code de la sécurité intérieure|CSI|du CSI)",
 }
 
 codes_regex = {
@@ -173,7 +222,7 @@ codes_regex = {
     "CPP": reg_beginning["UNIVERSAL"] + reg_ending["CPP"],
     "CASSUR": reg_beginning["UNIVERSAL"] + reg_ending["CASSUR"],
     "CCONSO": reg_beginning["UNIVERSAL"] + reg_ending["CCONSO"],
-    "CSI" : reg_beginning["UNIVERSAL"] + reg_ending["CSI"],
+    "CSI": reg_beginning["UNIVERSAL"] + reg_ending["CSI"],
 }
 
 
@@ -260,12 +309,16 @@ def do_upload():
     for code in code_results:
         yield "<p> " + "Analyse des textes du " + main_codelist[code] + "... </p>"
         for result in code_results[code]:
-            donnees_article = trouve_article(idtext=codes_API[code], idarticle=result)
-            if donnees_article is None:
+            article_id = get_article_id(
+                article_number=result, code_name=main_codelist[code]
+            )
+            if article_id is None:
                 articles_not_found.append(
                     "Article " + result + " du " + main_codelist[code] + " non trouvé"
                 )
+                print("Article ", result, " du ", main_codelist, " non trouvé")
             else:
+                donnees_article = get_article_content(article_id)
                 date_debut = donnees_article["dateDebut"]
                 date_fin = donnees_article["dateFin"]
                 if date_debut < past_reference and date_fin > future_reference:
