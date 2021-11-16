@@ -25,7 +25,7 @@ def paragraphs_selector(paragraphs):
     return paragraphs_to_test
 
 
-# Les paragraphes à tester sont confrontés aux expressions régulières de chaque code
+# Les paragraphes à tester sont confrontés à l'expression régulière de chaque code
 def text_detector(paragraphs_to_test):
     for code in main_codelist:
         code_results[code] = []
@@ -243,11 +243,11 @@ def do_upload():
     # L'utilisateur upload son document, il est enregistré provisoirement
     upload = request.files.get("upload")
     if upload is None:
-        return "Pas de fichier"
+        yield "Pas de fichier"
     global name, ext
     name, ext = os.path.splitext(upload.filename)
     if ext not in (".odt", ".docx"):
-        return "File extension not allowed."
+        yield "Extension incorrecte"
     save_path = Path.cwd() / Path("tmp")
     if not os.path.exists(save_path):
         os.makedirs(save_path)
@@ -288,6 +288,7 @@ def do_upload():
         datetime.datetime.now() + datetime.timedelta(days=float(user_years) * 365)
     ).timestamp() * 1000
 
+    # Analyse au regard des dates d'entrée en vigueur et de fin de l'article
     for code in code_results:
         if code_results[code] != []:
             yield "<h4> " + "Analyse des textes du " + main_codelist[code] + "... </h4>"
