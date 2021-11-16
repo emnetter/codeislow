@@ -90,8 +90,6 @@ def legifrance_auth():
 
 # Recherche sur Légifrance de l'identifiant unique de l'article
 def get_article_id(article_number, code_name):
-    today = int(time.time() * 1000)
-    print("aujourd'hui : ", today)
     data = {
         "recherche": {
             "champs": [
@@ -316,7 +314,6 @@ def do_upload():
                 articles_not_found.append(
                     "Article " + result + " du " + main_codelist[code] + " non trouvé"
                 )
-                print("Article ", result, " du ", main_codelist, " non trouvé")
             else:
                 donnees_article = get_article_content(article_id)
                 date_debut = donnees_article["dateDebut"]
@@ -361,8 +358,8 @@ def do_upload():
 
 if __name__ == "__main__":
 
+    today = int(time.time() * 1000)
     access_token = legifrance_auth()
-
     headers = {
         "Authorization": f"Bearer {access_token}",
         "Content-Type": "application/json",
