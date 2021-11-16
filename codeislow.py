@@ -173,21 +173,6 @@ main_codelist = {
     "CCONSO": "Code de la consommation",
     "CSI": "Code de la sécurité intérieure",
 }
-codes_API = {
-    "CCIV": "LEGITEXT000006070721",
-    "CPRCIV": "LEGITEXT000006070716",
-    "CPCE": "LEGITEXT000025024948",
-    "CCOM": "LEGITEXT000005634379",
-    "CTRAV": "LEGITEXT000006072050",
-    "CMF": "LEGITEXT000006072026",
-    "CCONSO": "LEGITEXT000006069565",
-    "CGI": "LEGITEXT000006069577",
-    "CPEN": "LEGITEXT000006070719",
-    "CPP": "LEGITEXT000006071154",
-    "CPI": "LEGITEXT000006069414",
-    "CASSUR": "LEGITEXT000006073984",
-    "CSI": "LEGITEXT000025503132",
-}
 
 reg_beginning = {
     "UNIVERSAL": r"((?:L\.?|R\.?|A\.?|D\.?)?\s*\d+-?\d*-?\d*)\s*(?:alinéa|al\.)?\s*\d*\s*"
@@ -333,7 +318,7 @@ def do_upload():
                     )
                 if date_fin < future_reference:
                     articles_changing_soon.append(
-                        "La version actuelle de l'article"
+                        "La version actuelle de l'article "
                         + result
                         + " du "
                         + main_codelist[code]
