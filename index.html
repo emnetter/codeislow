@@ -3,7 +3,7 @@
 <br>
 <br>
 <form action="/upload" method="post" enctype="multipart/form-data">
-<label>Alerter en cas de variation des textes sur une période de </label> <input type="text" name="user_years" value="2"> an(s) vers le passé et vers l'avenir<br>
+<label>Alerter en cas de variation des textes sur une période de </label> <input type="number" name="user_years" value="2" min="0.5" max="99"> an(s) vers le passé et vers l'avenir<br>
  <label> Choisissez un fichier (DOCX, ODT) : </label> <input type="file" name="upload" accept = ".docx, .odt"/>
   <input type="submit" value="Envoyez le fichier" />
 </form>
