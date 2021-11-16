@@ -257,7 +257,7 @@ def do_upload():
     # Le document DOCX ou ODT est transformé en liste de paragraphes
     paragraphsdoc = []
 
-    yield "<h3> Début de l'analyse du texte. Veuillez patienter... </h3>"
+    yield "<h3> Analyse en cours. Veuillez patienter... </h3>"
 
     if ext == ".docx":
         document = docx.Document(file_path)
@@ -276,7 +276,6 @@ def do_upload():
 
     # Mise en oeuvre des expressions régulières
     paragraphs_to_test = paragraphs_selector(paragraphsdoc)
-
     code_results = text_detector(paragraphs_to_test)
     results_printer(code_results)
 
@@ -290,8 +289,10 @@ def do_upload():
     ).timestamp() * 1000
 
     for code in code_results:
-        yield "<p> " + "Analyse des textes du " + main_codelist[code] + "... </p>"
+        if code_results[code] != []:
+            yield "<h4> " + "Analyse des textes du " + main_codelist[code] + "... </h4>"
         for result in code_results[code]:
+            yield "<small> " + "Article " + result  + "...  </small>"
             article_id = get_article_id(
                 article_number=result, code_name=main_codelist[code]
             )
