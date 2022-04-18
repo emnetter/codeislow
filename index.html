@@ -1,6 +1,30 @@
-
+<h1 style="color:#c62828"> Code is low  v0.5</h1>
+<h3 style="color:navy"> un programme expérimental par E. Netter </h3>
+<br>
 <form action="/upload" method="post" enctype="multipart/form-data">
-<label>Alerter en cas de variation des textes sur une période de </label> <input type="text" name="user_years" value="1"> an(s) vers le passé et vers l'avenir<br>
+<label>Alerter en cas de variation des textes sur une période de </label> <input type="number" name="user_years" value="2" min="0" max="99"> an(s) vers le passé et vers l'avenir<br>
  <label> Choisissez un fichier (DOCX, ODT) : </label> <input type="file" name="upload" accept = ".docx, .odt"/>
   <input type="submit" value="Envoyez le fichier" />
 </form>
+<br>
+<h3 style="color:navy"> Guide d'utilisation </h3>
+<p> Soumettez un texte au format DOCX ou ODT. Le programme recherchera des références à des articles de code (ex : art. 1240 C. civ.). Il vous alertera : </p>
+	<ul>
+	<li> Si le texte est introuvable sur Légifrance (abrogé, faute de frappe...) </li>
+	<li> Si le texte a été récemment modifié (période définie par vous) </li>
+	<li> Si le texte va être modifié prochainement (période définie par vous) </li>
+	</ul>
+
+<h3 style="color:navy"> Codes actuellement testés : </h3>
+	<li> Code civil </li>
+	<li> Code de procédure civile </li>
+    <li> Code de commerce </li>
+    <li> Code du travail </li>
+    <li> Code de la propriété intellectuelle </li>
+    <li> Code pénal </li>
+    <li> Code de procédure pénale </li>
+	<li> Code des assurances </li>
+	<li> Code de la consommation </li>
+	<li> Code de la sécurité intérieure </li>
+	
+	

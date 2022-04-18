@@ -5,6 +5,7 @@ import docx
 import requests
 import json
 import datetime
+import time
 import os
 from dotenv import load_dotenv, find_dotenv
 from odf import text, teletype
@@ -24,8 +25,10 @@ def paragraphs_selector(paragraphs):
     return paragraphs_to_test
 
 
-# Les paragraphes à tester sont confrontés aux expressions régulières de chaque code
+# Les paragraphes à tester sont confrontés à l'expression régulière de chaque code
 def text_detector(paragraphs_to_test):
+    for code in main_codelist:
+        code_results[code] = []
     for code in main_codelist:
         code_detecteur = re.compile(codes_regex[code], re.I)
         for paragraph in paragraphs_to_test:
@@ -33,7 +36,10 @@ def text_detector(paragraphs_to_test):
                 results = code_detecteur.findall(element)
                 for group in results:
                     for match in group:
-                        if match != "" and match not in code_results[code]:
+                        if (
+                            match != ""
+                            and reformat_results(match) not in code_results[code]
+                        ):
                             code_results[code].append(reformat_results(match))
     return code_results
 
@@ -62,7 +68,7 @@ def reformat_results(result):
 
 # Authentification sur Légifrance à l'aide de secrets conservés dans .env
 def legifrance_auth():
-    TOKEN_URL = "https://sandbox-oauth.aife.economie.gouv.fr/api/oauth/token"
+    TOKEN_URL = "https://oauth.piste.gouv.fr/api/oauth/token"
 
     load_dotenv(find_dotenv())
     CLIENT_ID = os.environ.get("CLIENT_ID")
@@ -82,20 +88,66 @@ def legifrance_auth():
     return access_token
 
 
-# Pour chaque article de code, Légifrance est interrogé et renvoie un dico JSON
-def trouve_article(idtext, idarticle):
-
-    data = {"id": idtext, "num": idarticle}
+# Recherche sur Légifrance de l'identifiant unique de l'article
+def get_article_id(article_number, code_name):
+    data = {
+        "recherche": {
+            "champs": [
+                {
+                    "typeChamp": "NUM_ARTICLE",
+                    "criteres": [
+                        {
+                            "typeRecherche": "EXACTE",
+                            "valeur": article_number,
+                            "operateur": "ET",
+                        }
+                    ],
+                    "operateur": "ET",
+                }
+            ],
+            "filtres": [
+                {"facette": "NOM_CODE", "valeurs": [code_name]},
+                {"facette": "DATE_VERSION", "singleDate": today},
+            ],
+            "pageNumber": 1,
+            "pageSize": 10,
+            "operateur": "ET",
+            "sort": "PERTINENCE",
+            "typePagination": "ARTICLE",
+        },
+        "fond": "CODE_DATE",
+    }
 
     response = requests.post(
-        "https://sandbox-api.piste.gouv.fr/dila/legifrance-beta/"
-        "lf-engine-app/consult/getArticleWithIdAndNum",
+        "https://api.piste.gouv.fr/dila/legifrance-beta/lf-engine-app/search",
         headers=headers,
         json=data,
     )
 
-    dico = json.loads(response.text)
-    return dico["article"]
+    # print(response.text)
+    article_informations = json.loads(response.text)
+    if not article_informations["results"]:
+        return None
+    else:
+        article_id = article_informations["results"][0]["sections"][0]["extracts"][0][
+            "id"
+        ]
+        # print("return sera ", article_id)
+        return article_id
+
+
+# A partir de l'identifiant unique, rapatriement du contenu de l'article
+def get_article_content(article_id):
+    data = {"id": article_id}
+
+    response = requests.post(
+        "https://api.piste.gouv.fr/dila/legifrance-beta/lf-engine-app/consult/getArticle",
+        headers=headers,
+        json=data,
+    )
+
+    article_dictionary = json.loads(response.text)
+    return article_dictionary["article"]
 
 
 # Légifrance utilise des dates au format Epoch qu'il faut convertir au format classique
@@ -108,46 +160,54 @@ def epoch_to_date(epoch):
 
 # Initialisation du programme
 
+
 main_codelist = {
     "CCIV": "Code civil",
+    "CPRCIV": "Code de procédure civile",
     "CCOM": "Code de commerce",
     "CTRAV": "Code du travail",
-}
-codes_API = {
-    "CCIV": "LEGITEXT000006070721",
-    "CPRCIV": "LEGITEXT000006070716",
-    "CPCE": "LEGITEXT000025024948",
-    "CCOM": "LEGITEXT000005634379",
-    "CTRAV": "LEGITEXT000006072050",
-    "CMF": "LEGITEXT000006072026",
-    "CCONSO": "LEGITEXT000006069565",
-    "CGI": "LEGITEXT000006069577",
+    "CPI": "Code de la propriété intellectuelle",
+    "CPEN": "Code pénal",
+    "CPP": "Code de procédure pénale",
+    "CASSUR": "Code des assurances",
+    "CCONSO": "Code de la consommation",
+    "CSI": "Code de la sécurité intérieure",
 }
 
 reg_beginning = {
-    "CIVTYPE": r"(\d+-?\d*-?\d*)\s*(?:alinéa|al\.)?\s*\d*\s*"
-    r"(?:,\s*(\d+-?\d*-?\d*)\s*(?:alinéa|al\.)?\s*\d*\s*"
-    r"(?:,\s*(\d+-?\d*-?\d*)\s*(?:alinéa|al\.)?\s*\d*\s*"
-    r"(?:,\s*(\d+-?\d*-?\d*)\s*(?:alinéa|al\.)?\s*\d*\s*)*)*)*"
-    r"(?:et\s*(\d+-?\d*-?\d*)\s*(?:alinéa|al\.)?\s*\d*\s*)*",
-    "COMTYPE": r"((?:L\.?|R\.?|A\.?)\s*\d+-?\d*-?\d*)\s*(?:alinéa|al\.)?\s*\d*\s*"
-    r"(?:,\s*((?:L\.?|R\.?|A\.?)\s*\d+-?\d*-?\d*)\s*(?:alinéa|al\.)?\s*\d*\s*"
-    r"(?:,\s*((?:L\.?|R\.?|A\.?)\s*\d+-?\d*-?\d*)\s*(?:alinéa|al\.)?\s*\d*\s*"
-    r"(?:,\s*((?:L\.?|R\.?|A\.?)\s*\d+-?\d*-?\d*)\s*(?:alinéa|al\.)?\s*\d*\s*)*)*)*"
-    r"(?:et\s*((?:L\.?|R\.?|A\.?)\s*\d+-?\d*-?\d*)\s*(?:alinéa|al\.)?\s*\d*\s*)*",
+    "UNIVERSAL": r"((?:L\.?|R\.?|A\.?|D\.?)?\s*\d+-?\d*-?\d*)\s*(?:alinéa|al\.)?\s*\d*\s*"
+    r"(?:,\s*((?:L\.?|R\.?|A\.?|D\.?)?\s*\d+-?\d*-?\d*)\s*(?:alinéa|al\.)?\s*\d*\s*"
+    r"(?:,\s*((?:L\.?|R\.?|A\.?|D\.?)?\s*\d+-?\d*-?\d*)\s*(?:alinéa|al\.)?\s*\d*\s*"
+    r"(?:,\s*((?:L\.?|R\.?|A\.?|D\.?)?\s*\d+-?\d*-?\d*)\s*(?:alinéa|al\.)?\s*\d*\s*)*)*)*"
+    r"(?:et\s*((?:L\.?|R\.?|A\.?|D\.?)?\s*\d+-?\d*-?\d*)\s*(?:alinéa|al\.)?\s*\d*\s*)*",
 }
 
 reg_ending = {
     "CCIV": r"\s*(?:du Code civil|C\. civ\.)",
+    "CPRCIV": r"\s*(?:du Code de procédure civile|C\. pr\. civ\.|CPC|du CPC)",
     "CCOM": r"\s*(?:du Code de commerce|C\. com\.)",
     "CTRAV": r"\s*(?:du Code du travail|C\. trav\.)",
+    "CPI": r"\s*(?:du Code de la propriété intellectuelle|CPI|C\. pr\. int\.|du CPI)",
+    "CPEN": r"\s*(?:du Code pénal|C\. pén\.)",
+    "CPP": r"\s*(?:du Code de procédure pénale|du CPP|CPP)",
+    "CASSUR": r"\s*(?:du Code des assurances|C\. assur\.)",
+    "CCONSO": r"\s*(?:du Code de la consommation|C\. conso\.)",
+    "CSI": r"\s*(?:du Code de la sécurité intérieure|CSI|du CSI)",
 }
 
 codes_regex = {
-    "CCIV": reg_beginning["CIVTYPE"] + reg_ending["CCIV"],
-    "CCOM": reg_beginning["COMTYPE"] + reg_ending["CCOM"],
-    "CTRAV": reg_beginning["COMTYPE"] + reg_ending["CTRAV"],
+    "CCIV": reg_beginning["UNIVERSAL"] + reg_ending["CCIV"],
+    "CPRCIV": reg_beginning["UNIVERSAL"] + reg_ending["CPRCIV"],
+    "CCOM": reg_beginning["UNIVERSAL"] + reg_ending["CCOM"],
+    "CTRAV": reg_beginning["UNIVERSAL"] + reg_ending["CTRAV"],
+    "CPI": reg_beginning["UNIVERSAL"] + reg_ending["CPI"],
+    "CPEN": reg_beginning["UNIVERSAL"] + reg_ending["CPEN"],
+    "CPP": reg_beginning["UNIVERSAL"] + reg_ending["CPP"],
+    "CASSUR": reg_beginning["UNIVERSAL"] + reg_ending["CASSUR"],
+    "CCONSO": reg_beginning["UNIVERSAL"] + reg_ending["CCONSO"],
+    "CSI": reg_beginning["UNIVERSAL"] + reg_ending["CSI"],
 }
+
 
 code_results = {}
 articles_not_found = []
@@ -158,6 +218,7 @@ articles_without_event = []
 for code in main_codelist:
     code_results[code] = []
 
+
 # Affichage de la page web d'accueil
 @route("/")
 def root():
@@ -167,16 +228,26 @@ def root():
 # Actions à effectuer à l'upload du document de l'utilisateur
 @route("/upload", method="POST")
 def do_upload():
+
+    code_results = dict()
+    articles_not_found.clear()
+    articles_recently_modified.clear()
+    articles_changing_soon.clear()
+    articles_without_event.clear()
+
+    for code in main_codelist:
+        code_results[code] = []
+
     # L'utilisateur définit sur quelle période la validité de l'article est testée
     user_years = request.forms.get("user_years")
     # L'utilisateur upload son document, il est enregistré provisoirement
     upload = request.files.get("upload")
-    if not upload:
-        return "Pas de fichier"
+    if upload is None:
+        yield "Pas de fichier"
     global name, ext
     name, ext = os.path.splitext(upload.filename)
     if ext not in (".odt", ".docx"):
-        return "File extension not allowed."
+        yield "Extension incorrecte"
     save_path = Path.cwd() / Path("tmp")
     if not os.path.exists(save_path):
         os.makedirs(save_path)
@@ -186,7 +257,7 @@ def do_upload():
     # Le document DOCX ou ODT est transformé en liste de paragraphes
     paragraphsdoc = []
 
-    yield "<h3> Début de l'analyse du texte. Veuillez patienter... </h3>"
+    yield "<h3> Analyse en cours. Veuillez patienter... </h3>"
 
     if ext == ".docx":
         document = docx.Document(file_path)
@@ -200,6 +271,7 @@ def do_upload():
             paragraphsdoc.append(teletype.extractText(texts[i]))
 
     # Suppression du fichier utilisateur, devenu inutile
+
     os.remove(file_path)
 
     # Mise en oeuvre des expressions régulières
@@ -216,17 +288,21 @@ def do_upload():
         datetime.datetime.now() + datetime.timedelta(days=float(user_years) * 365)
     ).timestamp() * 1000
 
+    # Analyse au regard des dates d'entrée en vigueur et de fin de l'article
     for code in code_results:
-        yield "<p> " + "Analyse Légifrance des textes du " + main_codelist[
-            code
-        ] + " </p>"
+        if code_results[code] != []:
+            yield "<h4> " + "Analyse des textes du " + main_codelist[code] + "... </h4>"
         for result in code_results[code]:
-            donnees_article = trouve_article(idtext=codes_API[code], idarticle=result)
-            if donnees_article is None:
+            yield "<small> " + "Article " + result  + "...  </small>"
+            article_id = get_article_id(
+                article_number=result, code_name=main_codelist[code]
+            )
+            if article_id is None:
                 articles_not_found.append(
                     "Article " + result + " du " + main_codelist[code] + " non trouvé"
                 )
             else:
+                donnees_article = get_article_content(article_id)
                 date_debut = donnees_article["dateDebut"]
                 date_fin = donnees_article["dateFin"]
                 if date_debut < past_reference and date_fin > future_reference:
@@ -244,7 +320,7 @@ def do_upload():
                     )
                 if date_fin < future_reference:
                     articles_changing_soon.append(
-                        "La version actuelle de l'article"
+                        "La version actuelle de l'article "
                         + result
                         + " du "
                         + main_codelist[code]
@@ -269,8 +345,8 @@ def do_upload():
 
 if __name__ == "__main__":
 
+    today = int(time.time() * 1000)
     access_token = legifrance_auth()
-
     headers = {
         "Authorization": f"Bearer {access_token}",
         "Content-Type": "application/json",
