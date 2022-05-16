@@ -173,7 +173,7 @@ main_codelist = {
     "CCONSO": "Code de la consommation",
     "CSI": "Code de la sécurité intérieure",
     "CSP": "Code de la santé publique",
-    "CSS": "Code de la sécurité sociale"
+    "CSS": "Code de la sécurité sociale",
 }
 
 reg_beginning = {
