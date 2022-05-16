@@ -172,6 +172,8 @@ main_codelist = {
     "CASSUR": "Code des assurances",
     "CCONSO": "Code de la consommation",
     "CSI": "Code de la sécurité intérieure",
+    "CSP": "Code de la santé publique",
+    "CSS": "Code de la sécurité sociale"
 }
 
 reg_beginning = {
@@ -193,6 +195,8 @@ reg_ending = {
     "CASSUR": r"\s*(?:du Code des assurances|C\. assur\.)",
     "CCONSO": r"\s*(?:du Code de la consommation|C\. conso\.)",
     "CSI": r"\s*(?:du Code de la sécurité intérieure|CSI|du CSI)",
+    "CSP": r"\s*(?:du Code de la santé publique|C\. sant\. pub\.|CSP|du CSP)",
+    "CSS": r"\s*(?:du Code de la sécurité sociale|C\. sec\. soc\.|CSS|du CSS)",
 }
 
 codes_regex = {
@@ -206,6 +210,8 @@ codes_regex = {
     "CASSUR": reg_beginning["UNIVERSAL"] + reg_ending["CASSUR"],
     "CCONSO": reg_beginning["UNIVERSAL"] + reg_ending["CCONSO"],
     "CSI": reg_beginning["UNIVERSAL"] + reg_ending["CSI"],
+    "CSP": reg_beginning["UNIVERSAL"] + reg_ending["CSP"],
+    "CSS": reg_beginning["UNIVERSAL"] + reg_ending["CSS"],
 }
 
 
