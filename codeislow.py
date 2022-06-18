@@ -290,11 +290,13 @@ def do_upload():
     yield "<h3> Analyse en cours. Veuillez patienter... </h3>"
 
     if ext == ".docx":
+        yield "<h5> Le fichier DOCX est actuellement parcouru. </h5>"
         document = docx.Document(file_path)
         for i in range(len(document.paragraphs)):
             paragraphsdoc.append(document.paragraphs[i].text)
 
     elif ext == ".odt":
+        yield "<h5> Le fichier ODT est actuellement parcouru. </h5>"
         document = load(file_path)
         texts = document.getElementsByType(text.P)
         for i in range(len(texts)):
@@ -305,7 +307,9 @@ def do_upload():
     os.remove(file_path)
 
     # Mise en oeuvre des expressions régulières
+    yield "<h5> Les paragraphes du document sont triés. </h5>"
     paragraphs_to_test = paragraphs_selector(paragraphsdoc)
+    yield "<h5> Les différents codes de droit français sont recherchés. </h5>"
     code_results = text_detector(paragraphs_to_test)
     results_printer(code_results)
 
@@ -321,7 +325,7 @@ def do_upload():
     # Analyse au regard des dates d'entrée en vigueur et de fin de l'article
     for code in code_results:
         if code_results[code] != []:
-            yield "<h4> " + "Analyse des textes du " + main_codelist[code] + "... </h4>"
+            yield "<h4> " + "La base Légifrance est interrogée : textes du " + main_codelist[code] + "... </h4>"
         for result in code_results[code]:
             yield "<small> " + "Article " + result  + "...  </small>"
             article_id = get_article_id(

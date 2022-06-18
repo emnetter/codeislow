@@ -14,7 +14,7 @@
           % end
 			</ul>
 
-		<h3 style="color:orangered"> Textes dont la version actuelle expire dans moins de {{user_past}} an(s) </h1>
+		<h3 style="color:orangered"> Textes dont la version actuelle expire dans moins de {{user_future}} an(s) </h1>
 			<ul>
 			% for result in articles_changing_soon:
              <li>{{result}}</li>
