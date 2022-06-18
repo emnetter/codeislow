@@ -16,25 +16,6 @@ from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 
 
-def requests_retry_session(
-    retries=3,
-    backoff_factor=0.3,
-    status_forcelist=(500, 502, 504),
-    session=None,
-):
-    session = session or requests.Session()
-    retry = Retry(
-        total=retries,
-        read=retries,
-        connect=retries,
-        backoff_factor=backoff_factor,
-        status_forcelist=status_forcelist,
-    )
-    adapter = HTTPAdapter(max_retries=retry)
-    session.mount('http://', adapter)
-    session.mount('https://', adapter)
-    return session
-
 # Tri des paragraphes du texte pour retenir seulement ceux
 # faisant référence à un "article"
 def paragraphs_selector(paragraphs):
@@ -108,6 +89,26 @@ def legifrance_auth():
     token = res.json()
     access_token = token["access_token"]
     return access_token
+
+# Ralentir les requêtes si danger de saturation du serveur Légifrance
+def requests_retry_session(
+    retries=3,
+    backoff_factor=0.3,
+    status_forcelist=(500, 502, 504),
+    session=None,
+):
+    session = session or requests.Session()
+    retry = Retry(
+        total=retries,
+        read=retries,
+        connect=retries,
+        backoff_factor=backoff_factor,
+        status_forcelist=status_forcelist,
+    )
+    adapter = HTTPAdapter(max_retries=retry)
+    session.mount('http://', adapter)
+    session.mount('https://', adapter)
+    return session
 
 
 # Recherche sur Légifrance de l'identifiant unique de l'article
@@ -267,7 +268,8 @@ def do_upload():
         code_results[code] = []
 
     # L'utilisateur définit sur quelle période la validité de l'article est testée
-    user_years = request.forms.get("user_years")
+    user_past = request.forms.get("user_past")
+    user_future = request.forms.get("user_future")
     # L'utilisateur upload son document, il est enregistré provisoirement
     upload = request.files.get("upload")
     if upload is None:
@@ -310,10 +312,10 @@ def do_upload():
     # Définition des bornes de la période déclenchant une alerte
     # si l'article a été modifié / va être modifié
     past_reference = (
-        datetime.datetime.now() - datetime.timedelta(days=float(user_years) * 365)
+        datetime.datetime.now() - datetime.timedelta(days=float(user_past) * 365)
     ).timestamp() * 1000
     future_reference = (
-        datetime.datetime.now() + datetime.timedelta(days=float(user_years) * 365)
+        datetime.datetime.now() + datetime.timedelta(days=float(user_future) * 365)
     ).timestamp() * 1000
 
     # Analyse au regard des dates d'entrée en vigueur et de fin de l'article
