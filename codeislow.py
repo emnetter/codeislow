@@ -366,7 +366,8 @@ def do_upload():
             "articles_recently_modified": articles_recently_modified,
             "articles_changing_soon": articles_changing_soon,
             "articles_without_event": articles_without_event,
-            "user_years": user_years,
+            "user_past": user_past,
+            "user_future": user_future,
         },
     )
 
