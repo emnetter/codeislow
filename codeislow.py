@@ -12,6 +12,28 @@ from odf import text, teletype
 from odf.opendocument import load
 from pathlib import Path
 from bottle import route, request, static_file, run, template
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
+
+
+def requests_retry_session(
+    retries=3,
+    backoff_factor=0.3,
+    status_forcelist=(500, 502, 504),
+    session=None,
+):
+    session = session or requests.Session()
+    retry = Retry(
+        total=retries,
+        read=retries,
+        connect=retries,
+        backoff_factor=backoff_factor,
+        status_forcelist=status_forcelist,
+    )
+    adapter = HTTPAdapter(max_retries=retry)
+    session.mount('http://', adapter)
+    session.mount('https://', adapter)
+    return session
 
 # Tri des paragraphes du texte pour retenir seulement ceux
 # faisant référence à un "article"
@@ -118,7 +140,7 @@ def get_article_id(article_number, code_name):
         "fond": "CODE_DATE",
     }
 
-    response = requests.post(
+    response = requests_retry_session().post(
         "https://api.piste.gouv.fr/dila/legifrance-beta/lf-engine-app/search",
         headers=headers,
         json=data,
@@ -140,7 +162,7 @@ def get_article_id(article_number, code_name):
 def get_article_content(article_id):
     data = {"id": article_id}
 
-    response = requests.post(
+    response = requests_retry_session().post(
         "https://api.piste.gouv.fr/dila/legifrance-beta/lf-engine-app/consult/getArticle",
         headers=headers,
         json=data,
