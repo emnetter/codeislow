@@ -91,6 +91,7 @@ def legifrance_auth():
     access_token = token["access_token"]
     return access_token
 
+
 # Ralentir les requêtes si danger de saturation du serveur Légifrance
 def requests_retry_session(
     retries=3,
@@ -107,8 +108,8 @@ def requests_retry_session(
         status_forcelist=status_forcelist,
     )
     adapter = HTTPAdapter(max_retries=retry)
-    session.mount('http://', adapter)
-    session.mount('https://', adapter)
+    session.mount("http://", adapter)
+    session.mount("https://", adapter)
     return session
 
 
@@ -198,6 +199,7 @@ main_codelist = {
     "CSI": "Code de la sécurité intérieure",
     "CSP": "Code de la santé publique",
     "CSS": "Code de la sécurité sociale",
+    "CESEDA": "Code de l'entrée et du séjour des étrangers et du droit d'asile",
 }
 
 reg_beginning = {
@@ -221,6 +223,7 @@ reg_ending = {
     "CSI": r"\s*(?:du Code de la sécurité intérieure|CSI|du CSI)",
     "CSP": r"\s*(?:du Code de la santé publique|C\. sant\. pub\.|CSP|du CSP)",
     "CSS": r"\s*(?:du Code de la sécurité sociale|C\. sec\. soc\.|CSS|du CSS)",
+    "CESEDA": r"\s*(?:du Code de l'entrée et du séjour des étrangers et du droit d'asile|CESEDA|du CESEDA)",
 }
 
 codes_regex = {
@@ -236,6 +239,7 @@ codes_regex = {
     "CSI": reg_beginning["UNIVERSAL"] + reg_ending["CSI"],
     "CSP": reg_beginning["UNIVERSAL"] + reg_ending["CSP"],
     "CSS": reg_beginning["UNIVERSAL"] + reg_ending["CSS"],
+    "CESEDA" : reg_beginning["UNIVERSAL"] + reg_ending["CESEDA"],
 }
 
 
@@ -262,10 +266,9 @@ def do_upload():
     PASSWORD = os.environ.get("PASSWORD")
     CLIENT_SECRET = os.environ.get("CLIENT_SECRET")
     user_password = request.forms.get("password")
-    if user_password != PASSWORD :
+    if user_password != PASSWORD:
         yield "Mot de passe incorrect"
         sys.exit()
-
 
     code_results = dict()
     articles_not_found.clear()
@@ -334,9 +337,11 @@ def do_upload():
     # Analyse au regard des dates d'entrée en vigueur et de fin de l'article
     for code in code_results:
         if code_results[code] != []:
-            yield "<h4> " + "La base Légifrance est interrogée : textes du " + main_codelist[code] + "... </h4>"
+            yield "<h4> " + "La base Légifrance est interrogée : textes du " + main_codelist[
+                code
+            ] + "... </h4>"
         for result in code_results[code]:
-            yield "<small> " + "Article " + result  + "...  </small>"
+            yield "<small> " + "Article " + result + "...  </small>"
             article_id = get_article_id(
                 article_number=result, code_name=main_codelist[code]
             )
