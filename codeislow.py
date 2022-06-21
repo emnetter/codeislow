@@ -7,6 +7,7 @@ import json
 import datetime
 import time
 import os
+import sys
 from dotenv import load_dotenv, find_dotenv
 from odf import text, teletype
 from odf.opendocument import load
@@ -257,6 +258,14 @@ def root():
 # Actions à effectuer à l'upload du document de l'utilisateur
 @route("/upload", method="POST")
 def do_upload():
+    load_dotenv(find_dotenv())
+    PASSWORD = os.environ.get("PASSWORD")
+    CLIENT_SECRET = os.environ.get("CLIENT_SECRET")
+    user_password = request.forms.get("password")
+    if user_password != PASSWORD :
+        yield "Mot de passe incorrect"
+        sys.exit()
+
 
     code_results = dict()
     articles_not_found.clear()

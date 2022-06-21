@@ -1,2 +1,9 @@
 
 .env
+.idea/codeislow.iml
+.idea/inspectionProfiles/profiles_settings.xml
+.idea/modules.xml
+.idea/workspace.xml
+.idea/vcs.xml
+debug/codeislow-logs-1654119119213.txt
+debug/codeislow-logs-1654247407754.txt
