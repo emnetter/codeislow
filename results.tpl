@@ -7,14 +7,14 @@
           % end
 			</ul>
 
-		<h3 style="color:orangered"> Textes modifiés il y a moins de {{user_years}} an(s) </h1>
+		<h3 style="color:orangered"> Textes modifiés il y a moins de {{user_past}} an(s) </h1>
 			<ul>
 			% for result in articles_recently_modified:
              <li>{{result}}</li>
           % end
 			</ul>
 
-		<h3 style="color:orangered"> Textes dont la version actuelle expire dans moins de {{user_years}} an(s) </h1>
+		<h3 style="color:orangered"> Textes dont la version actuelle expire dans moins de {{user_future}} an(s) </h1>
 			<ul>
 			% for result in articles_changing_soon:
              <li>{{result}}</li>

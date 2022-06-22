@@ -7,11 +7,15 @@ import json
 import datetime
 import time
 import os
+import sys
 from dotenv import load_dotenv, find_dotenv
 from odf import text, teletype
 from odf.opendocument import load
 from pathlib import Path
 from bottle import route, request, static_file, run, template
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
+
 
 # Tri des paragraphes du texte pour retenir seulement ceux
 # faisant référence à un "article"
@@ -88,6 +92,27 @@ def legifrance_auth():
     return access_token
 
 
+# Ralentir les requêtes si danger de saturation du serveur Légifrance
+def requests_retry_session(
+    retries=3,
+    backoff_factor=0.3,
+    status_forcelist=(500, 502, 504),
+    session=None,
+):
+    session = session or requests.Session()
+    retry = Retry(
+        total=retries,
+        read=retries,
+        connect=retries,
+        backoff_factor=backoff_factor,
+        status_forcelist=status_forcelist,
+    )
+    adapter = HTTPAdapter(max_retries=retry)
+    session.mount("http://", adapter)
+    session.mount("https://", adapter)
+    return session
+
+
 # Recherche sur Légifrance de l'identifiant unique de l'article
 def get_article_id(article_number, code_name):
     data = {
@@ -118,7 +143,7 @@ def get_article_id(article_number, code_name):
         "fond": "CODE_DATE",
     }
 
-    response = requests.post(
+    response = requests_retry_session().post(
         "https://api.piste.gouv.fr/dila/legifrance-beta/lf-engine-app/search",
         headers=headers,
         json=data,
@@ -140,7 +165,7 @@ def get_article_id(article_number, code_name):
 def get_article_content(article_id):
     data = {"id": article_id}
 
-    response = requests.post(
+    response = requests_retry_session().post(
         "https://api.piste.gouv.fr/dila/legifrance-beta/lf-engine-app/consult/getArticle",
         headers=headers,
         json=data,
@@ -172,6 +197,10 @@ main_codelist = {
     "CASSUR": "Code des assurances",
     "CCONSO": "Code de la consommation",
     "CSI": "Code de la sécurité intérieure",
+    "CSP": "Code de la santé publique",
+    "CSS": "Code de la sécurité sociale",
+    "CESEDA": "Code de l'entrée et du séjour des étrangers et du droit d'asile",
+    "CGCT" : "Code général des collectivités territoriales",
 }
 
 reg_beginning = {
@@ -193,6 +222,10 @@ reg_ending = {
     "CASSUR": r"\s*(?:du Code des assurances|C\. assur\.)",
     "CCONSO": r"\s*(?:du Code de la consommation|C\. conso\.)",
     "CSI": r"\s*(?:du Code de la sécurité intérieure|CSI|du CSI)",
+    "CSP": r"\s*(?:du Code de la santé publique|C\. sant\. pub\.|CSP|du CSP)",
+    "CSS": r"\s*(?:du Code de la sécurité sociale|C\. sec\. soc\.|CSS|du CSS)",
+    "CESEDA": r"\s*(?:du Code de l'entrée et du séjour des étrangers et du droit d'asile|CESEDA|du CESEDA)",
+    "CGCT": r"\s*(?:du Code général des collectivités territoriales|CGCT|du CGCT)",
 }
 
 codes_regex = {
@@ -206,6 +239,10 @@ codes_regex = {
     "CASSUR": reg_beginning["UNIVERSAL"] + reg_ending["CASSUR"],
     "CCONSO": reg_beginning["UNIVERSAL"] + reg_ending["CCONSO"],
     "CSI": reg_beginning["UNIVERSAL"] + reg_ending["CSI"],
+    "CSP": reg_beginning["UNIVERSAL"] + reg_ending["CSP"],
+    "CSS": reg_beginning["UNIVERSAL"] + reg_ending["CSS"],
+    "CESEDA": reg_beginning["UNIVERSAL"] + reg_ending["CESEDA"],
+    "CGCT": reg_beginning["UNIVERSAL"] + reg_ending["CGCT"],
 }
 
 
@@ -228,6 +265,13 @@ def root():
 # Actions à effectuer à l'upload du document de l'utilisateur
 @route("/upload", method="POST")
 def do_upload():
+    load_dotenv(find_dotenv())
+    PASSWORD = os.environ.get("PASSWORD")
+    CLIENT_SECRET = os.environ.get("CLIENT_SECRET")
+    user_password = request.forms.get("password")
+    if user_password != PASSWORD:
+        yield "Mot de passe incorrect"
+        sys.exit()
 
     code_results = dict()
     articles_not_found.clear()
@@ -239,7 +283,8 @@ def do_upload():
         code_results[code] = []
 
     # L'utilisateur définit sur quelle période la validité de l'article est testée
-    user_years = request.forms.get("user_years")
+    user_past = request.forms.get("user_past")
+    user_future = request.forms.get("user_future")
     # L'utilisateur upload son document, il est enregistré provisoirement
     upload = request.files.get("upload")
     if upload is None:
@@ -260,11 +305,13 @@ def do_upload():
     yield "<h3> Analyse en cours. Veuillez patienter... </h3>"
 
     if ext == ".docx":
+        yield "<h5> Le fichier DOCX est actuellement parcouru. </h5>"
         document = docx.Document(file_path)
         for i in range(len(document.paragraphs)):
             paragraphsdoc.append(document.paragraphs[i].text)
 
     elif ext == ".odt":
+        yield "<h5> Le fichier ODT est actuellement parcouru. </h5>"
         document = load(file_path)
         texts = document.getElementsByType(text.P)
         for i in range(len(texts)):
@@ -275,25 +322,29 @@ def do_upload():
     os.remove(file_path)
 
     # Mise en oeuvre des expressions régulières
+    yield "<h5> Les paragraphes du document sont triés. </h5>"
     paragraphs_to_test = paragraphs_selector(paragraphsdoc)
+    yield "<h5> Les différents codes de droit français sont recherchés. </h5>"
     code_results = text_detector(paragraphs_to_test)
     results_printer(code_results)
 
     # Définition des bornes de la période déclenchant une alerte
     # si l'article a été modifié / va être modifié
     past_reference = (
-        datetime.datetime.now() - datetime.timedelta(days=float(user_years) * 365)
+        datetime.datetime.now() - datetime.timedelta(days=float(user_past) * 365)
     ).timestamp() * 1000
     future_reference = (
-        datetime.datetime.now() + datetime.timedelta(days=float(user_years) * 365)
+        datetime.datetime.now() + datetime.timedelta(days=float(user_future) * 365)
     ).timestamp() * 1000
 
     # Analyse au regard des dates d'entrée en vigueur et de fin de l'article
     for code in code_results:
         if code_results[code] != []:
-            yield "<h4> " + "Analyse des textes du " + main_codelist[code] + "... </h4>"
+            yield "<h4> " + "La base Légifrance est interrogée : textes du " + main_codelist[
+                code
+            ] + "... </h4>"
         for result in code_results[code]:
-            yield "<small> " + "Article " + result  + "...  </small>"
+            yield "<small> " + "Article " + result + "...  </small>"
             article_id = get_article_id(
                 article_number=result, code_name=main_codelist[code]
             )
@@ -336,7 +387,8 @@ def do_upload():
             "articles_recently_modified": articles_recently_modified,
             "articles_changing_soon": articles_changing_soon,
             "articles_without_event": articles_without_event,
-            "user_years": user_years,
+            "user_past": user_past,
+            "user_future": user_future,
         },
     )
 
