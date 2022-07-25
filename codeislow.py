@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import re
+import time
 import docx
 import requests
 import json
@@ -16,44 +17,18 @@ from bottle import route, request, static_file, run, template
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 
-
-# Tri des paragraphes du texte pour retenir seulement ceux
-# faisant référence à un "article"
-def paragraphs_selector(paragraphs):
-    paragraphs_to_test = []
-    article_detector = re.compile(r"(^.*(?:article|art\.).*$)", flags=re.I | re.M)
-    for paragraph in paragraphs:
-        paragraphs_to_add = article_detector.findall(paragraph)
-        if paragraphs_to_add != []:
-            paragraphs_to_test.append(paragraphs_to_add)
-    return paragraphs_to_test
-
-
 # Les paragraphes à tester sont confrontés à l'expression régulière de chaque code
-def text_detector(paragraphs_to_test):
-    for code in main_codelist:
-        code_results[code] = []
-    for code in main_codelist:
-        code_detecteur = re.compile(codes_regex[code], re.I)
-        for paragraph in paragraphs_to_test:
-            for element in paragraph:
-                results = code_detecteur.findall(element)
-                for group in results:
-                    for match in group:
-                        if (
-                            match != ""
-                            and reformat_results(match) not in code_results[code]
-                        ):
-                            code_results[code].append(reformat_results(match))
-    return code_results
-
-
-# Permet de visualiser les articles de code trouvés dans le terminal
-def results_printer(code_results):
-    for code in main_codelist:
-        if code_results[code] != []:
-            print(f"Textes du {main_codelist[code]} identifiés:")
-            print((code_results[code]))
+def code_detector(code, string):
+    # ajouter un simple match reg-ending pour commencer
+    detector = re.compile(codes_regex[code], re.I)
+    detected = detector.findall(string)
+    detectedlist = list(sum(detected, ()))
+    cleanlist = []
+    for element in detectedlist:
+        if element != "" and reformat_results(element) not in cleanlist:
+            cleanlist.append(reformat_results(element))
+    sortedlist = sorted(cleanlist)
+    return sortedlist
 
 
 # Les numéros d'articles du texte sont reformatés pour en retirer certains
@@ -92,27 +67,6 @@ def legifrance_auth():
     return access_token
 
 
-# Ralentir les requêtes si danger de saturation du serveur Légifrance
-def requests_retry_session(
-    retries=3,
-    backoff_factor=0.3,
-    status_forcelist=(500, 502, 504),
-    session=None,
-):
-    session = session or requests.Session()
-    retry = Retry(
-        total=retries,
-        read=retries,
-        connect=retries,
-        backoff_factor=backoff_factor,
-        status_forcelist=status_forcelist,
-    )
-    adapter = HTTPAdapter(max_retries=retry)
-    session.mount("http://", adapter)
-    session.mount("https://", adapter)
-    return session
-
-
 # Recherche sur Légifrance de l'identifiant unique de l'article
 def get_article_id(article_number, code_name):
     data = {
@@ -143,7 +97,7 @@ def get_article_id(article_number, code_name):
         "fond": "CODE_DATE",
     }
 
-    response = requests_retry_session().post(
+    response = session.post(
         "https://api.piste.gouv.fr/dila/legifrance-beta/lf-engine-app/search",
         headers=headers,
         json=data,
@@ -165,7 +119,7 @@ def get_article_id(article_number, code_name):
 def get_article_content(article_id):
     data = {"id": article_id}
 
-    response = requests_retry_session().post(
+    response = session.post(
         "https://api.piste.gouv.fr/dila/legifrance-beta/lf-engine-app/consult/getArticle",
         headers=headers,
         json=data,
@@ -200,7 +154,7 @@ main_codelist = {
     "CSP": "Code de la santé publique",
     "CSS": "Code de la sécurité sociale",
     "CESEDA": "Code de l'entrée et du séjour des étrangers et du droit d'asile",
-    "CGCT" : "Code général des collectivités territoriales",
+    "CGCT": "Code général des collectivités territoriales",
 }
 
 reg_beginning = {
@@ -255,7 +209,6 @@ articles_without_event = []
 for code in main_codelist:
     code_results[code] = []
 
-
 # Affichage de la page web d'accueil
 @route("/")
 def root():
@@ -265,6 +218,7 @@ def root():
 # Actions à effectuer à l'upload du document de l'utilisateur
 @route("/upload", method="POST")
 def do_upload():
+    tps1 = time.process_time()
     load_dotenv(find_dotenv())
     PASSWORD = os.environ.get("PASSWORD")
     CLIENT_SECRET = os.environ.get("CLIENT_SECRET")
@@ -272,7 +226,6 @@ def do_upload():
     if user_password != PASSWORD:
         yield "Mot de passe incorrect"
         sys.exit()
-
     code_results = dict()
     articles_not_found.clear()
     articles_recently_modified.clear()
@@ -281,7 +234,6 @@ def do_upload():
 
     for code in main_codelist:
         code_results[code] = []
-
     # L'utilisateur définit sur quelle période la validité de l'article est testée
     user_past = request.forms.get("user_past")
     user_future = request.forms.get("user_future")
@@ -299,7 +251,7 @@ def do_upload():
     file_path = "{path}/{file}".format(path=save_path, file=upload.filename)
     upload.save(file_path, overwrite="true")
 
-    # Le document DOCX ou ODT est transformé en liste de paragraphes
+    article_detector = re.compile(r"(^.*(?:article|art\.).*$)", flags=re.I | re.M)
     paragraphsdoc = []
 
     yield "<h3> Analyse en cours. Veuillez patienter... </h3>"
@@ -308,25 +260,28 @@ def do_upload():
         yield "<h5> Le fichier DOCX est actuellement parcouru. </h5>"
         document = docx.Document(file_path)
         for i in range(len(document.paragraphs)):
-            paragraphsdoc.append(document.paragraphs[i].text)
-
+            paragraph = document.paragraphs[i].text
+            if article_detector.search(paragraph) is not None:
+                paragraphsdoc.append(paragraph)
     elif ext == ".odt":
         yield "<h5> Le fichier ODT est actuellement parcouru. </h5>"
         document = load(file_path)
         texts = document.getElementsByType(text.P)
         for i in range(len(texts)):
-            paragraphsdoc.append(teletype.extractText(texts[i]))
+            paragraph = teletype.extractText(texts[i])
+            if article_detector.search(paragraph) is not None:
+                paragraphsdoc.append(paragraph)
+    cleantext = " ".join(paragraphsdoc)
 
     # Suppression du fichier utilisateur, devenu inutile
 
-    os.remove(file_path)
+    #    os.remove(file_path)
 
     # Mise en oeuvre des expressions régulières
-    yield "<h5> Les paragraphes du document sont triés. </h5>"
-    paragraphs_to_test = paragraphs_selector(paragraphsdoc)
     yield "<h5> Les différents codes de droit français sont recherchés. </h5>"
-    code_results = text_detector(paragraphs_to_test)
-    results_printer(code_results)
+    for code in main_codelist:
+        code_results[code] = code_detector(code, cleantext)
+    tps2 = time.process_time()
 
     # Définition des bornes de la période déclenchant une alerte
     # si l'article a été modifié / va être modifié
@@ -378,7 +333,6 @@ def do_upload():
                         + " n'est valable que jusqu'au "
                         + str(epoch_to_date(date_fin))
                     )
-
     # Utilisaton d'un template Bottle pour afficher les résultats
     yield template(
         "results",
@@ -391,6 +345,8 @@ def do_upload():
             "user_future": user_future,
         },
     )
+    tps3 = time.process_time()
+
 
 
 # Corps du programme
@@ -398,6 +354,17 @@ def do_upload():
 if __name__ == "__main__":
 
     today = int(time.time() * 1000)
+
+    retry_strategy = Retry(
+        total=3,
+        status_forcelist=[429, 500, 502, 503, 504],
+        allowed_methods=["HEAD", "GET", "OPTIONS"],
+    )
+    adapter = HTTPAdapter(max_retries=retry_strategy)
+    session = requests.Session()
+    session.mount("https://", adapter)
+    session.mount("http://", adapter)
+
     access_token = legifrance_auth()
     headers = {
         "Authorization": f"Bearer {access_token}",
