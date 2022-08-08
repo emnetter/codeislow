@@ -17,6 +17,7 @@ from bottle import route, request, static_file, run, template
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 
+
 # Les paragraphes à tester sont confrontés à l'expression régulière de chaque code
 def code_detector(code, string):
     # ajouter un simple match reg-ending pour commencer
@@ -47,14 +48,14 @@ def reformat_results(result):
 
 # Authentification sur Légifrance à l'aide de secrets conservés dans .env
 def legifrance_auth():
-    TOKEN_URL = "https://oauth.piste.gouv.fr/api/oauth/token"
+    token_url = "https://oauth.piste.gouv.fr/api/oauth/token"
 
     load_dotenv(find_dotenv())
     CLIENT_ID = os.environ.get("CLIENT_ID")
     CLIENT_SECRET = os.environ.get("CLIENT_SECRET")
 
     res = requests.post(
-        TOKEN_URL,
+        token_url,
         data={
             "grant_type": "client_credentials",
             "client_id": CLIENT_ID,
@@ -159,10 +160,10 @@ main_codelist = {
 
 reg_beginning = {
     "UNIVERSAL": r"((?:L\.?|R\.?|A\.?|D\.?)?\s*\d+-?\d*-?\d*)\s*(?:alinéa|al\.)?\s*\d*\s*"
-    r"(?:,\s*((?:L\.?|R\.?|A\.?|D\.?)?\s*\d+-?\d*-?\d*)\s*(?:alinéa|al\.)?\s*\d*\s*"
-    r"(?:,\s*((?:L\.?|R\.?|A\.?|D\.?)?\s*\d+-?\d*-?\d*)\s*(?:alinéa|al\.)?\s*\d*\s*"
-    r"(?:,\s*((?:L\.?|R\.?|A\.?|D\.?)?\s*\d+-?\d*-?\d*)\s*(?:alinéa|al\.)?\s*\d*\s*)*)*)*"
-    r"(?:et\s*((?:L\.?|R\.?|A\.?|D\.?)?\s*\d+-?\d*-?\d*)\s*(?:alinéa|al\.)?\s*\d*\s*)*",
+                 r"(?:,\s*((?:L\.?|R\.?|A\.?|D\.?)?\s*\d+-?\d*-?\d*)\s*(?:alinéa|al\.)?\s*\d*\s*"
+                 r"(?:,\s*((?:L\.?|R\.?|A\.?|D\.?)?\s*\d+-?\d*-?\d*)\s*(?:alinéa|al\.)?\s*\d*\s*"
+                 r"(?:,\s*((?:L\.?|R\.?|A\.?|D\.?)?\s*\d+-?\d*-?\d*)\s*(?:alinéa|al\.)?\s*\d*\s*)*)*)*"
+                 r"(?:et\s*((?:L\.?|R\.?|A\.?|D\.?)?\s*\d+-?\d*-?\d*)\s*(?:alinéa|al\.)?\s*\d*\s*)*",
 }
 
 reg_ending = {
@@ -199,7 +200,6 @@ codes_regex = {
     "CGCT": reg_beginning["UNIVERSAL"] + reg_ending["CGCT"],
 }
 
-
 code_results = {}
 articles_not_found = []
 articles_recently_modified = []
@@ -208,6 +208,7 @@ articles_without_event = []
 
 for code in main_codelist:
     code_results[code] = []
+
 
 # Affichage de la page web d'accueil
 @route("/")
@@ -286,15 +287,15 @@ def do_upload():
     # Définition des bornes de la période déclenchant une alerte
     # si l'article a été modifié / va être modifié
     past_reference = (
-        datetime.datetime.now() - datetime.timedelta(days=float(user_past) * 365)
-    ).timestamp() * 1000
+                             datetime.datetime.now() - datetime.timedelta(days=float(user_past) * 365)
+                     ).timestamp() * 1000
     future_reference = (
-        datetime.datetime.now() + datetime.timedelta(days=float(user_future) * 365)
-    ).timestamp() * 1000
+                               datetime.datetime.now() + datetime.timedelta(days=float(user_future) * 365)
+                       ).timestamp() * 1000
 
     # Analyse au regard des dates d'entrée en vigueur et de fin de l'article
     for code in code_results:
-        if code_results[code] != []:
+        if code_results[code]:
             yield "<h4> " + "La base Légifrance est interrogée : textes du " + main_codelist[
                 code
             ] + "... </h4>"
@@ -348,11 +349,9 @@ def do_upload():
     tps3 = time.process_time()
 
 
-
 # Corps du programme
 
 if __name__ == "__main__":
-
     today = int(time.time() * 1000)
 
     retry_strategy = Retry(
