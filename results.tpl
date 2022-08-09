@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang=fr>
 <head>
+ <script> document.body.innerHTML = "" </script>
  <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css"> 
 </head>
 <body>
 
-	<body>
 	<div class="w3-panel w3-red">
 		<h3> Textes non trouvés sur Légifrance </h1>
 	</div>
@@ -38,3 +38,4 @@
              <li>{{result}}</li>
           % end
 			</ul>
+</body>
