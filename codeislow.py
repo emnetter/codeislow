@@ -16,6 +16,7 @@ from pathlib import Path
 from bottle import route, request, static_file, run, template
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
+from pdfminer.high_level import extract_text
 
 
 # Les paragraphes à tester sont confrontés à l'expression régulière de chaque code
@@ -51,21 +52,21 @@ def legifrance_auth():
     token_url = "https://oauth.piste.gouv.fr/api/oauth/token"
 
     load_dotenv(find_dotenv())
-    CLIENT_ID = os.environ.get("CLIENT_ID")
-    CLIENT_SECRET = os.environ.get("CLIENT_SECRET")
+    client_id = os.environ.get("CLIENT_ID")
+    client_secret = os.environ.get("CLIENT_SECRET")
 
     res = requests.post(
         token_url,
         data={
             "grant_type": "client_credentials",
-            "client_id": CLIENT_ID,
-            "client_secret": CLIENT_SECRET,
+            "client_id": client_id,
+            "client_secret": client_secret,
             "scope": "openid",
         },
     )
-    token = res.json()
-    access_token = token["access_token"]
-    return access_token
+    response = res.json()
+    token = response["access_token"]
+    return token
 
 
 # Recherche sur Légifrance de l'identifiant unique de l'article
@@ -221,10 +222,9 @@ def root():
 def do_upload():
     tps1 = time.process_time()
     load_dotenv(find_dotenv())
-    PASSWORD = os.environ.get("PASSWORD")
-    CLIENT_SECRET = os.environ.get("CLIENT_SECRET")
+    password = os.environ.get("PASSWORD")
     user_password = request.forms.get("password")
-    if user_password != PASSWORD:
+    if user_password != password:
         yield "Mot de passe incorrect"
         sys.exit()
     code_results = dict()
@@ -242,37 +242,22 @@ def do_upload():
     upload = request.files.get("upload")
     if upload is None:
         yield "Pas de fichier"
+        sys.exit()
     global name, ext
     name, ext = os.path.splitext(upload.filename)
-    if ext not in (".odt", ".docx"):
+    if ext not in (".odt", ".docx", ".pdf"):
         yield "Extension incorrecte"
+        sys.exit()
     save_path = Path.cwd() / Path("tmp")
     if not os.path.exists(save_path):
         os.makedirs(save_path)
     file_path = "{path}/{file}".format(path=save_path, file=upload.filename)
     upload.save(file_path, overwrite="true")
 
-    article_detector = re.compile(r"(^.*(?:article|art\.).*$)", flags=re.I | re.M)
-    paragraphsdoc = []
 
     yield "<h3> Analyse en cours. Veuillez patienter... </h3>"
 
-    if ext == ".docx":
-        yield "<h5> Le fichier DOCX est actuellement parcouru. </h5>"
-        document = docx.Document(file_path)
-        for i in range(len(document.paragraphs)):
-            paragraph = document.paragraphs[i].text
-            if article_detector.search(paragraph) is not None:
-                paragraphsdoc.append(paragraph)
-    elif ext == ".odt":
-        yield "<h5> Le fichier ODT est actuellement parcouru. </h5>"
-        document = load(file_path)
-        texts = document.getElementsByType(text.P)
-        for i in range(len(texts)):
-            paragraph = teletype.extractText(texts[i])
-            if article_detector.search(paragraph) is not None:
-                paragraphsdoc.append(paragraph)
-    cleantext = " ".join(paragraphsdoc)
+    cleantext = yield from file_opener(ext, file_path)
 
     # Suppression du fichier utilisateur, devenu inutile
 
@@ -346,7 +331,32 @@ def do_upload():
             "user_future": user_future,
         },
     )
-    tps3 = time.process_time()
+
+
+def file_opener(ext, file_path):
+    article_detector = re.compile(r"(^.*(?:article|art\.).*$)", flags=re.I | re.M)
+    paragraphsdoc = []
+    if ext == ".docx":
+        yield "<h5> Le fichier DOCX est actuellement parcouru. </h5>"
+        document = docx.Document(file_path)
+        for i in range(len(document.paragraphs)):
+            paragraph = document.paragraphs[i].text
+            if article_detector.search(paragraph) is not None:
+                paragraphsdoc.append(paragraph)
+        complete_text = " ".join(paragraphsdoc)
+    elif ext == ".odt":
+        yield "<h5> Le fichier ODT est actuellement parcouru. </h5>"
+        document = load(file_path)
+        texts = document.getElementsByType(text.P)
+        for i in range(len(texts)):
+            paragraph = teletype.extractText(texts[i])
+            if article_detector.search(paragraph) is not None:
+                paragraphsdoc.append(paragraph)
+        complete_text = " ".join(paragraphsdoc)
+    elif ext == ".pdf":
+        yield "<h5> Le fichier PDF est actuellement parcouru. </h5>"
+        complete_text = extract_text(file_path)
+    return complete_text
 
 
 # Corps du programme
