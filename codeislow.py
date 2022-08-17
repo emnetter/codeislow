@@ -19,6 +19,54 @@ from requests.packages.urllib3.util.retry import Retry
 from pdfminer.high_level import extract_text
 
 
+# Authentification sur Légifrance à l'aide de secrets conservés dans .env
+def legifrance_auth():
+    token_url = "https://oauth.piste.gouv.fr/api/oauth/token"
+
+    load_dotenv(find_dotenv())
+    client_id = os.environ.get("CLIENT_ID")
+    client_secret = os.environ.get("CLIENT_SECRET")
+
+    res = requests.post(
+        token_url,
+        data={
+            "grant_type": "client_credentials",
+            "client_id": client_id,
+            "client_secret": client_secret,
+            "scope": "openid",
+        },
+    )
+    response = res.json()
+    token = response["access_token"]
+    return token
+
+# Ouverture du fichier utilisateur
+def file_opener(ext, file_path):
+    article_detector = re.compile(r"(^.*(?:article|art\.).*$)", flags=re.I | re.M)
+    paragraphsdoc = []
+    if ext == ".docx":
+        yield "<h5> Le fichier DOCX est actuellement parcouru. </h5>"
+        document = docx.Document(file_path)
+        for i in range(len(document.paragraphs)):
+            paragraph = document.paragraphs[i].text
+            if article_detector.search(paragraph) is not None:
+                paragraphsdoc.append(paragraph)
+        complete_text = " ".join(paragraphsdoc)
+    elif ext == ".odt":
+        yield "<h5> Le fichier ODT est actuellement parcouru. </h5>"
+        document = load(file_path)
+        texts = document.getElementsByType(text.P)
+        for i in range(len(texts)):
+            paragraph = teletype.extractText(texts[i])
+            if article_detector.search(paragraph) is not None:
+                paragraphsdoc.append(paragraph)
+        complete_text = " ".join(paragraphsdoc)
+    elif ext == ".pdf":
+        yield "<h5> Le fichier PDF est actuellement parcouru. </h5>"
+        complete_text = extract_text(file_path)
+    return complete_text
+
+
 # Les paragraphes à tester sont confrontés à l'expression régulière de chaque code
 def code_detector(code, string):
     # ajouter un simple match reg-ending pour commencer
@@ -47,26 +95,6 @@ def reformat_results(result):
     return newresult
 
 
-# Authentification sur Légifrance à l'aide de secrets conservés dans .env
-def legifrance_auth():
-    token_url = "https://oauth.piste.gouv.fr/api/oauth/token"
-
-    load_dotenv(find_dotenv())
-    client_id = os.environ.get("CLIENT_ID")
-    client_secret = os.environ.get("CLIENT_SECRET")
-
-    res = requests.post(
-        token_url,
-        data={
-            "grant_type": "client_credentials",
-            "client_id": client_id,
-            "client_secret": client_secret,
-            "scope": "openid",
-        },
-    )
-    response = res.json()
-    token = response["access_token"]
-    return token
 
 
 # Recherche sur Légifrance de l'identifiant unique de l'article
@@ -105,7 +133,6 @@ def get_article_id(article_number, code_name):
         json=data,
     )
 
-    # print(response.text)
     article_informations = json.loads(response.text)
     if not article_informations["results"]:
         return None
@@ -333,30 +360,6 @@ def do_upload():
     )
 
 
-def file_opener(ext, file_path):
-    article_detector = re.compile(r"(^.*(?:article|art\.).*$)", flags=re.I | re.M)
-    paragraphsdoc = []
-    if ext == ".docx":
-        yield "<h5> Le fichier DOCX est actuellement parcouru. </h5>"
-        document = docx.Document(file_path)
-        for i in range(len(document.paragraphs)):
-            paragraph = document.paragraphs[i].text
-            if article_detector.search(paragraph) is not None:
-                paragraphsdoc.append(paragraph)
-        complete_text = " ".join(paragraphsdoc)
-    elif ext == ".odt":
-        yield "<h5> Le fichier ODT est actuellement parcouru. </h5>"
-        document = load(file_path)
-        texts = document.getElementsByType(text.P)
-        for i in range(len(texts)):
-            paragraph = teletype.extractText(texts[i])
-            if article_detector.search(paragraph) is not None:
-                paragraphsdoc.append(paragraph)
-        complete_text = " ".join(paragraphsdoc)
-    elif ext == ".pdf":
-        yield "<h5> Le fichier PDF est actuellement parcouru. </h5>"
-        complete_text = extract_text(file_path)
-    return complete_text
 
 
 # Corps du programme
