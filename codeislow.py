@@ -40,11 +40,12 @@ def legifrance_auth():
     token = response["access_token"]
     return token
 
+def spaces_remover(string):
+    return re.sub(" {2,}", " ", string)
 
 # Ouverture du fichier utilisateur
 def file_opener(ext, file_path):
     article_detector = re.compile(r"(^.*(?:article|art\.).*$)", flags=re.I | re.M)
-    complete_text = ""
     paragraphsdoc = []
     if ext == ".docx":
         yield "<h5> Le fichier DOCX est actuellement parcouru. </h5>"
@@ -68,7 +69,7 @@ def file_opener(ext, file_path):
             page_text = (page.extract_text())
             if article_detector.search(page_text) is not None:
                 paragraphsdoc.append(page_text)
-    complete_text = " ".join(paragraphsdoc)
+    complete_text = spaces_remover(" ".join(paragraphsdoc))
     return complete_text
 
 
