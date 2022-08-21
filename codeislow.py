@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import re
-import time
 import docx
 import requests
 import json
@@ -16,7 +15,7 @@ from pathlib import Path
 from bottle import route, request, static_file, run, template
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
-from pdfminer.high_level import extract_text
+from PyPDF2 import PdfReader
 
 
 # Authentification sur Légifrance à l'aide de secrets conservés dans .env
@@ -43,6 +42,7 @@ def legifrance_auth():
 # Ouverture du fichier utilisateur
 def file_opener(ext, file_path):
     article_detector = re.compile(r"(^.*(?:article|art\.).*$)", flags=re.I | re.M)
+    complete_text = ""
     paragraphsdoc = []
     if ext == ".docx":
         yield "<h5> Le fichier DOCX est actuellement parcouru. </h5>"
@@ -51,7 +51,6 @@ def file_opener(ext, file_path):
             paragraph = document.paragraphs[i].text
             if article_detector.search(paragraph) is not None:
                 paragraphsdoc.append(paragraph)
-        complete_text = " ".join(paragraphsdoc)
     elif ext == ".odt":
         yield "<h5> Le fichier ODT est actuellement parcouru. </h5>"
         document = load(file_path)
@@ -60,10 +59,14 @@ def file_opener(ext, file_path):
             paragraph = teletype.extractText(texts[i])
             if article_detector.search(paragraph) is not None:
                 paragraphsdoc.append(paragraph)
-        complete_text = " ".join(paragraphsdoc)
     elif ext == ".pdf":
         yield "<h5> Le fichier PDF est actuellement parcouru. </h5>"
-        complete_text = extract_text(file_path)
+        reader = PdfReader(file_path)
+        for page in reader.pages :
+            page_text = (page.extract_text())
+            if article_detector.search(page_text) is not None:
+                paragraphsdoc.append(page_text)
+    complete_text = " ".join(paragraphsdoc)
     return complete_text
 
 
