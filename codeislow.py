@@ -1,21 +1,22 @@
 #!/usr/bin/env python3
 
+import datetime
+import json
+import os
 import re
+import sys
+import time
+from pathlib import Path
+
 import docx
 import requests
-import json
-import datetime
-import time
-import os
-import sys
+from PyPDF2 import PdfReader
+from bottle import route, request, static_file, run, template
 from dotenv import load_dotenv, find_dotenv
 from odf import text, teletype
 from odf.opendocument import load
-from pathlib import Path
-from bottle import route, request, static_file, run, template
 from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.util.retry import Retry
-from PyPDF2 import PdfReader
+from urllib3.util import Retry
 
 
 # Authentification sur Légifrance à l'aide de secrets conservés dans .env
@@ -38,6 +39,7 @@ def legifrance_auth():
     response = res.json()
     token = response["access_token"]
     return token
+
 
 # Ouverture du fichier utilisateur
 def file_opener(ext, file_path):
@@ -62,7 +64,7 @@ def file_opener(ext, file_path):
     elif ext == ".pdf":
         yield "<h5> Le fichier PDF est actuellement parcouru. </h5>"
         reader = PdfReader(file_path)
-        for page in reader.pages :
+        for page in reader.pages:
             page_text = (page.extract_text())
             if article_detector.search(page_text) is not None:
                 paragraphsdoc.append(page_text)
@@ -96,8 +98,6 @@ def reformat_results(result):
             if char != "." and char != " ":
                 newresult = newresult + char
     return newresult
-
-
 
 
 # Recherche sur Légifrance de l'identifiant unique de l'article
@@ -195,8 +195,8 @@ reg_beginning = {
                  r"(?:,\s*((?:L\.?|R\.?|A\.?|D\.?)?\s*\d+-?\d*-?\d*),?\s*(?:alinéa|al\.)?\s*\d*\s?°?\s*"
                  r"(?:,\s*((?:L\.?|R\.?|A\.?|D\.?)?\s*\d+-?\d*-?\d*),?\s*(?:alinéa|al\.)?\s*\d*\s?°?\s*)*)*)*"
                  r"(?:et\s*((?:L\.?|R\.?|A\.?|D\.?)?\s*\d+-?\d*-?\d*),?\s*(?:alinéa|al\.)?\s*\d*\s?°?\s*)*"
-                 r"(?:et s\.|et suivants)?\s*",
-                 }
+                 r"(?:et s\.|et suivants)?",
+}
 
 reg_ending = {
     "CCIV": r"\s*(?:du Code civil|C\. civ\.)",
@@ -251,7 +251,6 @@ def root():
 # Actions à effectuer à l'upload du document de l'utilisateur
 @route("/upload", method="POST")
 def do_upload():
-    tps1 = time.process_time()
     load_dotenv(find_dotenv())
     password = os.environ.get("PASSWORD")
     user_password = request.forms.get("password")
@@ -274,7 +273,6 @@ def do_upload():
     if upload is None:
         yield "Pas de fichier"
         sys.exit()
-    global name, ext
     name, ext = os.path.splitext(upload.filename)
     if ext not in (".odt", ".docx", ".pdf"):
         yield "Extension incorrecte"
@@ -284,7 +282,6 @@ def do_upload():
         os.makedirs(save_path)
     file_path = "{path}/{file}".format(path=save_path, file=upload.filename)
     upload.save(file_path, overwrite="true")
-
 
     yield "<h3> Analyse en cours. Veuillez patienter... </h3>"
 
@@ -298,7 +295,6 @@ def do_upload():
     yield "<h5> Les différents codes de droit français sont recherchés. </h5>"
     for code in main_codelist:
         code_results[code] = code_detector(code, cleantext)
-    tps2 = time.process_time()
 
     # Définition des bornes de la période déclenchant une alerte
     # si l'article a été modifié / va être modifié
@@ -362,8 +358,6 @@ def do_upload():
             "user_future": user_future,
         },
     )
-
-
 
 
 # Corps du programme
