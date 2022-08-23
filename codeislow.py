@@ -40,43 +40,43 @@ def legifrance_auth():
     token = response["access_token"]
     return token
 
+
 def spaces_remover(string):
     return re.sub(" {2,}", " ", string)
+
 
 # Ouverture du fichier utilisateur
 def file_opener(ext, file_path):
     article_detector = re.compile(r"(^.*(?:article|art\.).*$)", flags=re.I | re.M)
     paragraphsdoc = []
+    f = open(file_path, "rb")
     if ext == ".docx":
-        yield "<h5> Le fichier DOCX est actuellement parcouru. </h5>"
-        document = docx.Document(file_path)
+        document = docx.Document(f)
         for i in range(len(document.paragraphs)):
             paragraph = document.paragraphs[i].text
             if article_detector.search(paragraph) is not None:
                 paragraphsdoc.append(paragraph)
     elif ext == ".odt":
-        yield "<h5> Le fichier ODT est actuellement parcouru. </h5>"
-        document = load(file_path)
+        document = load(f)
         texts = document.getElementsByType(text.P)
         for i in range(len(texts)):
             paragraph = teletype.extractText(texts[i])
             if article_detector.search(paragraph) is not None:
                 paragraphsdoc.append(paragraph)
     elif ext == ".pdf":
-        yield "<h5> Le fichier PDF est actuellement parcouru. </h5>"
         reader = PdfReader(file_path)
         for page in reader.pages:
             page_text = (page.extract_text())
             if article_detector.search(page_text) is not None:
                 paragraphsdoc.append(page_text)
     complete_text = spaces_remover(" ".join(paragraphsdoc))
+    f.close()
     return complete_text
 
 
 # Les paragraphes à tester sont confrontés à l'expression régulière de chaque code
-def code_detector(code, string):
-    # ajouter un simple match reg-ending pour commencer
-    detector = re.compile(codes_regex[code], re.I)
+def code_detector(code_name, string):
+    detector = re.compile(codes_regex[code_name], re.I)
     detected = detector.findall(string)
     detectedlist = list(sum(detected, ()))
     cleanlist = []
@@ -194,8 +194,8 @@ reg_beginning = {
     "UNIVERSAL": r"((?:L\.?|R\.?|A\.?|D\.?)?\s*\d+-?\d*-?\d*),?\s*(?:alinéa|al\.)?\s*\d*\s?°?\s*"
                  r"(?:,\s*((?:L\.?|R\.?|A\.?|D\.?)?\s*\d+-?\d*-?\d*),?\s*(?:alinéa|al\.)?\s*\d*\s?°?\s*"
                  r"(?:,\s*((?:L\.?|R\.?|A\.?|D\.?)?\s*\d+-?\d*-?\d*),?\s*(?:alinéa|al\.)?\s*\d*\s?°?\s*"
-                 r"(?:,\s*((?:L\.?|R\.?|A\.?|D\.?)?\s*\d+-?\d*-?\d*),?\s*(?:alinéa|al\.)?\s*\d*\s?°?\s*)*)*)*"
-                 r"(?:et\s*((?:L\.?|R\.?|A\.?|D\.?)?\s*\d+-?\d*-?\d*),?\s*(?:alinéa|al\.)?\s*\d*\s?°?\s*)*"
+                 r"(?:,\s*((?:L\.?|R\.?|A\.?|D\.?)?\s*\d+-?\d*-?\d*),?\s*(?:alinéa|al\.)?\s*\d*\s?°?\s*)?)?)?"
+                 r"(?:et\s*((?:L\.?|R\.?|A\.?|D\.?)?\s*\d+-?\d*-?\d*),?\s*(?:alinéa|al\.)?\s*\d*\s?°?\s*)?"
                  r"(?:et s\.|et suivants)?",
 }
 
@@ -233,14 +233,9 @@ codes_regex = {
     "CGCT": reg_beginning["UNIVERSAL"] + reg_ending["CGCT"],
 }
 
-code_results = {}
-articles_not_found = []
-articles_recently_modified = []
-articles_changing_soon = []
-articles_without_event = []
 
-for code in main_codelist:
-    code_results[code] = []
+
+
 
 
 # Affichage de la page web d'accueil
@@ -258,14 +253,15 @@ def do_upload():
     if user_password != password:
         yield "Mot de passe incorrect"
         sys.exit()
-    code_results = dict()
-    articles_not_found.clear()
-    articles_recently_modified.clear()
-    articles_changing_soon.clear()
-    articles_without_event.clear()
 
+    code_results = {}
     for code in main_codelist:
         code_results[code] = []
+    articles_not_found = []
+    articles_recently_modified = []
+    articles_changing_soon = []
+    articles_without_event = []
+
     # L'utilisateur définit sur quelle période la validité de l'article est testée
     user_past = request.forms.get("user_past")
     user_future = request.forms.get("user_future")
@@ -282,15 +278,14 @@ def do_upload():
     if not os.path.exists(save_path):
         os.makedirs(save_path)
     file_path = "{path}/{file}".format(path=save_path, file=upload.filename)
+    yield "<h3> Analyse en cours. Veuillez patienter... </h3>"
     upload.save(file_path, overwrite="true")
 
-    yield "<h3> Analyse en cours. Veuillez patienter... </h3>"
-
-    cleantext = yield from file_opener(ext, file_path)
+    yield "<h5> Le fichier est actuellement parcouru. </h5>"
+    cleantext = file_opener(ext, file_path)
 
     # Suppression du fichier utilisateur, devenu inutile
-
-    #    os.remove(file_path)
+    os.remove(file_path)
 
     # Mise en oeuvre des expressions régulières
     yield "<h5> Les différents codes de droit français sont recherchés. </h5>"
