@@ -10,7 +10,7 @@
 	</div>
 			<ul class="w3-ul w3-border">
 			% for result in articles_not_found:
-             <li>{{result}}</li>
+             <li>{{!result}}</li>
           % end
 			</ul>
 	<div class="w3-panel w3-yellow">
@@ -18,7 +18,7 @@
 	</div>
 			<ul class="w3-ul w3-border">
 			% for result in articles_recently_modified:
-             <li>{{result}}</li>
+             <li>{{!result}}</li>
           % end
 			</ul>
 	<div class="w3-panel w3-yellow">
@@ -26,7 +26,7 @@
 	</div>
 			<ul class="w3-ul w3-border">
 			% for result in articles_changing_soon:
-             <li>{{result}}</li>
+             <li>{{!result}}</li>
           % end
 			</ul>
 	<div class="w3-panel w3-green">
@@ -34,7 +34,7 @@
 	</div>
 			<ul class="w3-ul w3-border">
 			% for result in articles_without_event:
-             <li>{{result}}</li>
+             <li>{{!result}}</li>
           % end
 			</ul>
 </body>

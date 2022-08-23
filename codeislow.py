@@ -92,7 +92,7 @@ def code_detector(code_name, string):
 
 
 # Les numéros d'articles du texte sont reformatés pour en retirer certains
-# caractères (espace, espace insécable, point) qui empêchent la recherche Légifrance
+# caractères (espace, espace insécable, point) qui empêchent la recherche Légifrance.
 def reformat_results(result):
     newresult = ""
     result = result.replace("\xa0", " ")
@@ -321,14 +321,17 @@ def do_upload():
                     "Article " + article["number"] + " du " + main_codelist[code_name] + " non trouvé"
                 )
             else:
+                article_hyperlink = """<a href="https://www.legifrance.gouv.fr/codes/article_lc/""" + article[
+                    "id"] + """">""" + article["number"] + """</a>"""
+
                 if article["start"] < past_reference and article["end"] > future_reference:
                     articles_without_event.append(
-                        "Article " + article["number"] + " du " + main_codelist[code_name]
+                        "Article " + article_hyperlink + " du " + main_codelist[code_name]
                     )
                 if article["start"] > past_reference:
                     articles_recently_modified.append(
                         "L'article "
-                        + article["number"]
+                        + article_hyperlink
                         + " du "
                         + main_codelist[code_name]
                         + " a été modifié le "
@@ -337,7 +340,7 @@ def do_upload():
                 if article["end"] < future_reference:
                     articles_changing_soon.append(
                         "La version actuelle de l'article "
-                        + article["number"]
+                        + article_hyperlink
                         + " du "
                         + main_codelist[code_name]
                         + " n'est valable que jusqu'au "
