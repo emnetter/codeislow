@@ -270,7 +270,6 @@ def do_upload():
                        ).timestamp() * 1000
 
     # L'utilisateur upload son document, il est enregistré provisoirement
-    yield "<h3> Analyse en cours. Veuillez patienter... </h3>"
     upload = request.files.get("upload")
     if upload is None:
         yield "Pas de fichier"
@@ -284,6 +283,11 @@ def do_upload():
         os.makedirs(save_path)
     file_path = "{path}/{file}".format(path=save_path, file=upload.filename)
     upload.save(file_path, overwrite="true")
+    file_size = os.stat(file_path).st_size
+    if file_size > 2000000:
+        yield "ERREUR : fichier d'une taille supérieure à 2 Mo"
+        sys.exit()
+    yield "<h3> Analyse en cours. Veuillez patienter... </h3>"
     yield "<h5> Le fichier est actuellement parcouru. </h5>"
     cleantext = file_opener(ext, file_path)
 
@@ -321,8 +325,9 @@ def do_upload():
                     "Article " + article["number"] + " du " + main_codelist[code_name] + " non trouvé"
                 )
             else:
-                article_hyperlink = """<a class="w3-text-blue" href="https://www.legifrance.gouv.fr/codes/article_lc/""" + article[
-                    "id"] + """" target="_blank" rel="noopener">""" + article["number"] + """</a>"""
+                article_hyperlink = """<a class="w3-text-blue" href="https://www.legifrance.gouv.fr/codes/article_lc/""" + \
+                                    article[
+                                        "id"] + """" target="_blank" rel="noopener">""" + article["number"] + """</a>"""
 
                 if article["start"] < past_reference and article["end"] > future_reference:
                     articles_without_event.append(
