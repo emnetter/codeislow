@@ -11,7 +11,7 @@ from pathlib import Path
 import docx
 import requests
 from PyPDF2 import PdfReader
-from bottle import route, request, static_file, run, template
+from bottle import route, request, static_file, run
 from dotenv import load_dotenv, find_dotenv
 from odf import text, teletype
 from odf.opendocument import load
@@ -84,7 +84,11 @@ def code_detector(code_name, string):
         if element != "" and reformat_results(element) not in cleanlist:
             cleanlist.append(reformat_results(element))
     sortedlist = sorted(cleanlist)
-    return sortedlist
+    dictlist = []
+    for element in sortedlist:
+        dict_entry = {"number": element}
+        dictlist.append(dict_entry)
+    return dictlist
 
 
 # Les numéros d'articles du texte sont reformatés pour en retirer certains
@@ -148,16 +152,14 @@ def get_article_id(article_number, code_name):
         return article_id
 
 
-# A partir de l'identifiant unique, rapatriement du contenu de l'article
+# À partir de l'identifiant unique, rapatriement du contenu de l'article
 def get_article_content(article_id):
     data = {"id": article_id}
-
     response = session.post(
         "https://api.piste.gouv.fr/dila/legifrance-beta/lf-engine-app/consult/getArticle",
         headers=headers,
         json=data,
     )
-
     article_dictionary = json.loads(response.text)
     return article_dictionary["article"]
 
@@ -234,10 +236,6 @@ codes_regex = {
 }
 
 
-
-
-
-
 # Affichage de la page web d'accueil
 @route("/")
 def root():
@@ -265,7 +263,18 @@ def do_upload():
     # L'utilisateur définit sur quelle période la validité de l'article est testée
     user_past = request.forms.get("user_past")
     user_future = request.forms.get("user_future")
+
+    # Définition des bornes de la période déclenchant une alerte
+    # si l'article a été modifié / va être modifié
+    past_reference = (
+                             datetime.datetime.now() - datetime.timedelta(days=float(user_past) * 365)
+                     ).timestamp() * 1000
+    future_reference = (
+                               datetime.datetime.now() + datetime.timedelta(days=float(user_future) * 365)
+                       ).timestamp() * 1000
+
     # L'utilisateur upload son document, il est enregistré provisoirement
+    yield "<h3> Analyse en cours. Veuillez patienter... </h3>"
     upload = request.files.get("upload")
     if upload is None:
         yield "Pas de fichier"
@@ -278,9 +287,7 @@ def do_upload():
     if not os.path.exists(save_path):
         os.makedirs(save_path)
     file_path = "{path}/{file}".format(path=save_path, file=upload.filename)
-    yield "<h3> Analyse en cours. Veuillez patienter... </h3>"
     upload.save(file_path, overwrite="true")
-
     yield "<h5> Le fichier est actuellement parcouru. </h5>"
     cleantext = file_opener(ext, file_path)
 
@@ -289,71 +296,22 @@ def do_upload():
 
     # Mise en oeuvre des expressions régulières
     yield "<h5> Les différents codes de droit français sont recherchés. </h5>"
-    for code in main_codelist:
-        code_results[code] = code_detector(code, cleantext)
+    for code_name in main_codelist:
+        code_results[code_name] = code_detector(code_name, cleantext)
 
-    # Définition des bornes de la période déclenchant une alerte
-    # si l'article a été modifié / va être modifié
-    past_reference = (
-                             datetime.datetime.now() - datetime.timedelta(days=float(user_past) * 365)
-                     ).timestamp() * 1000
-    future_reference = (
-                               datetime.datetime.now() + datetime.timedelta(days=float(user_future) * 365)
-                       ).timestamp() * 1000
+    # Récupération des caractéristiques de chaque article sur Légifrance
+    for code_name in code_results:
+        for article in code_results[code_name]:
+            article_id = get_article_id(article["number"], main_codelist[code_name])
+            article.update({"id": article_id})
+            if article["id"] is not None:
+                article_content = get_article_content(article["id"])
+                # article_text = article_content["texte"]
+                article_start = article_content["dateDebut"]
+                article_end = article_content["dateFin"]
+                article.update({"start": article_start, "end": article_end})
 
-    # Analyse au regard des dates d'entrée en vigueur et de fin de l'article
-    for code in code_results:
-        if code_results[code]:
-            yield "<h4> " + "La base Légifrance est interrogée : textes du " + main_codelist[
-                code
-            ] + "... </h4>"
-        for result in code_results[code]:
-            yield "<small> " + "Article " + result + "...  </small>"
-            article_id = get_article_id(
-                article_number=result, code_name=main_codelist[code]
-            )
-            if article_id is None:
-                articles_not_found.append(
-                    "Article " + result + " du " + main_codelist[code] + " non trouvé"
-                )
-            else:
-                donnees_article = get_article_content(article_id)
-                date_debut = donnees_article["dateDebut"]
-                date_fin = donnees_article["dateFin"]
-                if date_debut < past_reference and date_fin > future_reference:
-                    articles_without_event.append(
-                        "Article " + result + " du " + main_codelist[code]
-                    )
-                if date_debut > past_reference:
-                    articles_recently_modified.append(
-                        "L'article "
-                        + result
-                        + " du "
-                        + main_codelist[code]
-                        + " a été modifié le "
-                        + str(epoch_to_date(date_debut))
-                    )
-                if date_fin < future_reference:
-                    articles_changing_soon.append(
-                        "La version actuelle de l'article "
-                        + result
-                        + " du "
-                        + main_codelist[code]
-                        + " n'est valable que jusqu'au "
-                        + str(epoch_to_date(date_fin))
-                    )
-    # Utilisaton d'un template Bottle pour afficher les résultats
-    yield template(
-        "results",
-        **{
-            "articles_not_found": articles_not_found,
-            "articles_recently_modified": articles_recently_modified,
-            "articles_changing_soon": articles_changing_soon,
-            "articles_without_event": articles_without_event,
-            "user_past": user_past,
-            "user_future": user_future,
-        },
-    )
+
 
 
 # Corps du programme
