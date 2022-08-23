@@ -321,7 +321,7 @@ def do_upload():
                     "Article " + article["number"] + " du " + main_codelist[code_name] + " non trouvé"
                 )
             else:
-                article_hyperlink = """<a href="https://www.legifrance.gouv.fr/codes/article_lc/""" + article[
+                article_hyperlink = """<a class="w3-text-blue" href="https://www.legifrance.gouv.fr/codes/article_lc/""" + article[
                     "id"] + """" target="_blank" rel="noopener">""" + article["number"] + """</a>"""
 
                 if article["start"] < past_reference and article["end"] > future_reference:
