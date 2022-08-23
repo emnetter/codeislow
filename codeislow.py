@@ -322,7 +322,7 @@ def do_upload():
                 )
             else:
                 article_hyperlink = """<a href="https://www.legifrance.gouv.fr/codes/article_lc/""" + article[
-                    "id"] + """">""" + article["number"] + """</a>"""
+                    "id"] + """" target="_blank" rel="noopener">""" + article["number"] + """</a>"""
 
                 if article["start"] < past_reference and article["end"] > future_reference:
                     articles_without_event.append(
