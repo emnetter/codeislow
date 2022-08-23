@@ -11,7 +11,7 @@ from pathlib import Path
 import docx
 import requests
 from PyPDF2 import PdfReader
-from bottle import route, request, static_file, run
+from bottle import route, request, static_file, run, template
 from dotenv import load_dotenv, find_dotenv
 from odf import text, teletype
 from odf.opendocument import load
@@ -255,10 +255,6 @@ def do_upload():
     code_results = {}
     for code in main_codelist:
         code_results[code] = []
-    articles_not_found = []
-    articles_recently_modified = []
-    articles_changing_soon = []
-    articles_without_event = []
 
     # L'utilisateur définit sur quelle période la validité de l'article est testée
     user_past = request.forms.get("user_past")
@@ -304,6 +300,7 @@ def do_upload():
         for article in code_results[code_name]:
             article_id = get_article_id(article["number"], main_codelist[code_name])
             article.update({"id": article_id})
+
             if article["id"] is not None:
                 article_content = get_article_content(article["id"])
                 # article_text = article_content["texte"]
@@ -311,7 +308,54 @@ def do_upload():
                 article_end = article_content["dateFin"]
                 article.update({"start": article_start, "end": article_end})
 
+    # Tri des articles pour affichage final
+    articles_not_found = []
+    articles_recently_modified = []
+    articles_changing_soon = []
+    articles_without_event = []
 
+    for code_name in code_results:
+        for article in code_results[code_name]:
+            if article["id"] is None:
+                articles_not_found.append(
+                    "Article " + article["number"] + " du " + main_codelist[code_name] + " non trouvé"
+                )
+            else:
+                if article["start"] < past_reference and article["end"] > future_reference:
+                    articles_without_event.append(
+                        "Article " + article["number"] + " du " + main_codelist[code_name]
+                    )
+                if article["start"] > past_reference:
+                    articles_recently_modified.append(
+                        "L'article "
+                        + article["number"]
+                        + " du "
+                        + main_codelist[code_name]
+                        + " a été modifié le "
+                        + str(epoch_to_date(article["start"]))
+                    )
+                if article["end"] < future_reference:
+                    articles_changing_soon.append(
+                        "La version actuelle de l'article "
+                        + article["number"]
+                        + " du "
+                        + main_codelist[code_name]
+                        + " n'est valable que jusqu'au "
+                        + str(epoch_to_date(article["end"]))
+                    )
+
+    # Utilisaton d'un template Bottle pour afficher les résultats
+    yield template(
+        "results",
+        **{
+            "articles_not_found": articles_not_found,
+            "articles_recently_modified": articles_recently_modified,
+            "articles_changing_soon": articles_changing_soon,
+            "articles_without_event": articles_without_event,
+            "user_past": user_past,
+            "user_future": user_future,
+        },
+    )
 
 
 # Corps du programme
