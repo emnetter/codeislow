@@ -78,31 +78,31 @@ def file_opener(ext, file_path):
 def code_detector(code_name, string):
     detector = re.compile(codes_regex[code_name], re.I)
     detected = detector.findall(string)
-    detectedlist = list(sum(detected, ()))
-    cleanlist = []
-    for element in detectedlist:
-        if element != "" and reformat_results(element) not in cleanlist:
-            cleanlist.append(reformat_results(element))
-    sortedlist = sorted(cleanlist)
-    dictlist = []
-    for element in sortedlist:
+    detected_list = list(sum(detected, ()))
+    clean_list = []
+    for element in detected_list:
+        if element != "" and reformat_results(element) not in clean_list:
+            clean_list.append(reformat_results(element))
+    sorted_list = sorted(clean_list)
+    dict_list = []
+    for element in sorted_list:
         dict_entry = {"number": element}
-        dictlist.append(dict_entry)
-    return dictlist
+        dict_list.append(dict_entry)
+    return dict_list
 
 
 # Les numéros d'articles du texte sont reformatés pour en retirer certains
 # caractères (espace, espace insécable, point) qui empêchent la recherche Légifrance.
 def reformat_results(result):
-    newresult = ""
+    new_result = ""
     result = result.replace("\xa0", " ")
     if (result[0]).isdigit():
         return result
     else:
         for char in result:
             if char != "." and char != " ":
-                newresult = newresult + char
-    return newresult
+                new_result = new_result + char
+    return new_result
 
 
 # Recherche sur Légifrance de l'identifiant unique de l'article
@@ -294,14 +294,20 @@ def do_upload():
     # Suppression du fichier utilisateur, devenu inutile
     os.remove(file_path)
 
-    # Mise en oeuvre des expressions régulières
+    # Mise en œuvre des expressions régulières
     yield "<h5> Les différents codes de droit français sont recherchés. </h5>"
     for code_name in main_codelist:
         code_results[code_name] = code_detector(code_name, cleantext)
 
+    for code_name in main_codelist:
+        if not code_results[code_name]:
+            del code_results[code_name]
+
     # Récupération des caractéristiques de chaque article sur Légifrance
     for code_name in code_results:
+        yield "<h4> " + "La base Légifrance est interrogée : textes du " + main_codelist[code_name] + "... </h4>"
         for article in code_results[code_name]:
+            yield "<small> " + "Article " + article["number"] + "...  </small>"
             article_id = get_article_id(article["number"], main_codelist[code_name])
             article.update({"id": article_id})
 
@@ -352,7 +358,7 @@ def do_upload():
                         + str(epoch_to_date(article["end"]))
                     )
 
-    # Utilisaton d'un template Bottle pour afficher les résultats
+    # Utilisation d'un template Bottle pour afficher les résultats
     yield template(
         "results",
         **{
@@ -374,7 +380,7 @@ if __name__ == "__main__":
     retry_strategy = Retry(
         total=3,
         status_forcelist=[429, 500, 502, 503, 504],
-        allowed_methods=["HEAD", "GET", "OPTIONS"],
+        allowed_methods=["HEAD", "GET", "POST", "OPTIONS"],
     )
     adapter = HTTPAdapter(max_retries=retry_strategy)
     session = requests.Session()

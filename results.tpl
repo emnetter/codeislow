@@ -8,7 +8,7 @@
 <div class="w3-container w3-blue-grey">
     <h1> Code is low</h1>
 </div>
-<p> Cliquez sur les numéros d'articles pour les ouvrir directement dans Légifrance et accéder à davantage d'informations (hors textes non trouvés)</p>
+<p class="w3-margin"> Cliquez sur les numéros d'articles pour les ouvrir directement dans Légifrance et accéder à davantage d'informations (hors textes non trouvés).</p>
 	<div class="w3-panel w3-red">
 		<h3> Textes non trouvés sur Légifrance </h3>
 	</div>
