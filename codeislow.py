@@ -165,11 +165,12 @@ def get_article_content(article_id):
 
 
 # Légifrance utilise des dates au format Epoch qu'il faut convertir au format classique
-def epoch_to_date(epoch):
-    converted = datetime.datetime(1970, 1, 1) + datetime.timedelta(
+def epoch_converter(epoch):
+    converted_date = datetime.datetime(1970, 1, 1) + datetime.timedelta(
         seconds=(epoch / 1000)
     )
-    return converted
+    simplified_date = converted_date.strftime('%Y-%m-%d')
+    return simplified_date
 
 
 # Initialisation du programme
@@ -346,7 +347,7 @@ def do_upload():
                         + " du "
                         + main_codelist[code_name]
                         + " a été modifié le "
-                        + str(epoch_to_date(article["start"]))
+                        + str(epoch_converter(article["start"]))
                     )
                 if article["end"] < future_reference:
                     articles_changing_soon.append(
@@ -355,7 +356,7 @@ def do_upload():
                         + " du "
                         + main_codelist[code_name]
                         + " n'est valable que jusqu'au "
-                        + str(epoch_to_date(article["end"]))
+                        + str(epoch_converter(article["end"]))
                     )
 
     # Utilisation d'un template Bottle pour afficher les résultats
