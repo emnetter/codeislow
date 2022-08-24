@@ -40,65 +40,69 @@ def legifrance_auth():
     token = response["access_token"]
     return token
 
+
 def spaces_remover(string):
     return re.sub(" {2,}", " ", string)
+
 
 # Ouverture du fichier utilisateur
 def file_opener(ext, file_path):
     article_detector = re.compile(r"(^.*(?:article|art\.).*$)", flags=re.I | re.M)
     paragraphsdoc = []
+    f = open(file_path, "rb")
     if ext == ".docx":
-        yield "<h5> Le fichier DOCX est actuellement parcouru. </h5>"
-        document = docx.Document(file_path)
+        document = docx.Document(f)
         for i in range(len(document.paragraphs)):
             paragraph = document.paragraphs[i].text
             if article_detector.search(paragraph) is not None:
                 paragraphsdoc.append(paragraph)
     elif ext == ".odt":
-        yield "<h5> Le fichier ODT est actuellement parcouru. </h5>"
-        document = load(file_path)
+        document = load(f)
         texts = document.getElementsByType(text.P)
         for i in range(len(texts)):
             paragraph = teletype.extractText(texts[i])
             if article_detector.search(paragraph) is not None:
                 paragraphsdoc.append(paragraph)
     elif ext == ".pdf":
-        yield "<h5> Le fichier PDF est actuellement parcouru. </h5>"
         reader = PdfReader(file_path)
         for page in reader.pages:
             page_text = (page.extract_text())
             if article_detector.search(page_text) is not None:
                 paragraphsdoc.append(page_text)
     complete_text = spaces_remover(" ".join(paragraphsdoc))
+    f.close()
     return complete_text
 
 
 # Les paragraphes à tester sont confrontés à l'expression régulière de chaque code
-def code_detector(code, string):
-    # ajouter un simple match reg-ending pour commencer
-    detector = re.compile(codes_regex[code], re.I)
+def code_detector(code_name, string):
+    detector = re.compile(codes_regex[code_name], re.I)
     detected = detector.findall(string)
-    detectedlist = list(sum(detected, ()))
-    cleanlist = []
-    for element in detectedlist:
-        if element != "" and reformat_results(element) not in cleanlist:
-            cleanlist.append(reformat_results(element))
-    sortedlist = sorted(cleanlist)
-    return sortedlist
+    detected_list = list(sum(detected, ()))
+    clean_list = []
+    for element in detected_list:
+        if element != "" and reformat_results(element) not in clean_list:
+            clean_list.append(reformat_results(element))
+    sorted_list = sorted(clean_list)
+    dict_list = []
+    for element in sorted_list:
+        dict_entry = {"number": element}
+        dict_list.append(dict_entry)
+    return dict_list
 
 
 # Les numéros d'articles du texte sont reformatés pour en retirer certains
-# caractères (espace, espace insécable, point) qui empêchent la recherche Légifrance
+# caractères (espace, espace insécable, point) qui empêchent la recherche Légifrance.
 def reformat_results(result):
-    newresult = ""
+    new_result = ""
     result = result.replace("\xa0", " ")
     if (result[0]).isdigit():
         return result
     else:
         for char in result:
             if char != "." and char != " ":
-                newresult = newresult + char
-    return newresult
+                new_result = new_result + char
+    return new_result
 
 
 # Recherche sur Légifrance de l'identifiant unique de l'article
@@ -148,26 +152,25 @@ def get_article_id(article_number, code_name):
         return article_id
 
 
-# A partir de l'identifiant unique, rapatriement du contenu de l'article
+# À partir de l'identifiant unique, rapatriement du contenu de l'article
 def get_article_content(article_id):
     data = {"id": article_id}
-
     response = session.post(
         "https://api.piste.gouv.fr/dila/legifrance-beta/lf-engine-app/consult/getArticle",
         headers=headers,
         json=data,
     )
-
     article_dictionary = json.loads(response.text)
     return article_dictionary["article"]
 
 
 # Légifrance utilise des dates au format Epoch qu'il faut convertir au format classique
-def epoch_to_date(epoch):
-    converted = datetime.datetime(1970, 1, 1) + datetime.timedelta(
+def epoch_converter(epoch):
+    converted_date = datetime.datetime(1970, 1, 1) + datetime.timedelta(
         seconds=(epoch / 1000)
     )
-    return converted
+    simplified_date = converted_date.strftime('%Y-%m-%d')
+    return simplified_date
 
 
 # Initialisation du programme
@@ -194,8 +197,8 @@ reg_beginning = {
     "UNIVERSAL": r"((?:L\.?|R\.?|A\.?|D\.?)?\s*\d+-?\d*-?\d*),?\s*(?:alinéa|al\.)?\s*\d*\s?°?\s*"
                  r"(?:,\s*((?:L\.?|R\.?|A\.?|D\.?)?\s*\d+-?\d*-?\d*),?\s*(?:alinéa|al\.)?\s*\d*\s?°?\s*"
                  r"(?:,\s*((?:L\.?|R\.?|A\.?|D\.?)?\s*\d+-?\d*-?\d*),?\s*(?:alinéa|al\.)?\s*\d*\s?°?\s*"
-                 r"(?:,\s*((?:L\.?|R\.?|A\.?|D\.?)?\s*\d+-?\d*-?\d*),?\s*(?:alinéa|al\.)?\s*\d*\s?°?\s*)*)*)*"
-                 r"(?:et\s*((?:L\.?|R\.?|A\.?|D\.?)?\s*\d+-?\d*-?\d*),?\s*(?:alinéa|al\.)?\s*\d*\s?°?\s*)*"
+                 r"(?:,\s*((?:L\.?|R\.?|A\.?|D\.?)?\s*\d+-?\d*-?\d*),?\s*(?:alinéa|al\.)?\s*\d*\s?°?\s*)?)?)?"
+                 r"(?:et\s*((?:L\.?|R\.?|A\.?|D\.?)?\s*\d+-?\d*-?\d*),?\s*(?:alinéa|al\.)?\s*\d*\s?°?\s*)?"
                  r"(?:et s\.|et suivants)?",
 }
 
@@ -233,15 +236,6 @@ codes_regex = {
     "CGCT": reg_beginning["UNIVERSAL"] + reg_ending["CGCT"],
 }
 
-code_results = {}
-articles_not_found = []
-articles_recently_modified = []
-articles_changing_soon = []
-articles_without_event = []
-
-for code in main_codelist:
-    code_results[code] = []
-
 
 # Affichage de la page web d'accueil
 @route("/")
@@ -258,17 +252,24 @@ def do_upload():
     if user_password != password:
         yield "Mot de passe incorrect"
         sys.exit()
-    code_results = dict()
-    articles_not_found.clear()
-    articles_recently_modified.clear()
-    articles_changing_soon.clear()
-    articles_without_event.clear()
 
+    code_results = {}
     for code in main_codelist:
         code_results[code] = []
+
     # L'utilisateur définit sur quelle période la validité de l'article est testée
     user_past = request.forms.get("user_past")
     user_future = request.forms.get("user_future")
+
+    # Définition des bornes de la période déclenchant une alerte
+    # si l'article a été modifié / va être modifié
+    past_reference = (
+                             datetime.datetime.now() - datetime.timedelta(days=float(user_past) * 365)
+                     ).timestamp() * 1000
+    future_reference = (
+                               datetime.datetime.now() + datetime.timedelta(days=float(user_future) * 365)
+                       ).timestamp() * 1000
+
     # L'utilisateur upload son document, il est enregistré provisoirement
     upload = request.files.get("upload")
     if upload is None:
@@ -283,71 +284,82 @@ def do_upload():
         os.makedirs(save_path)
     file_path = "{path}/{file}".format(path=save_path, file=upload.filename)
     upload.save(file_path, overwrite="true")
-
+    file_size = os.stat(file_path).st_size
+    if file_size > 2000000:
+        yield "ERREUR : fichier d'une taille supérieure à 2 Mo"
+        sys.exit()
     yield "<h3> Analyse en cours. Veuillez patienter... </h3>"
-
-    cleantext = yield from file_opener(ext, file_path)
+    yield "<h5> Le fichier est actuellement parcouru. </h5>"
+    cleantext = file_opener(ext, file_path)
 
     # Suppression du fichier utilisateur, devenu inutile
+    os.remove(file_path)
 
-    #    os.remove(file_path)
-
-    # Mise en oeuvre des expressions régulières
+    # Mise en œuvre des expressions régulières
     yield "<h5> Les différents codes de droit français sont recherchés. </h5>"
-    for code in main_codelist:
-        code_results[code] = code_detector(code, cleantext)
+    for code_name in main_codelist:
+        code_results[code_name] = code_detector(code_name, cleantext)
 
-    # Définition des bornes de la période déclenchant une alerte
-    # si l'article a été modifié / va être modifié
-    past_reference = (
-                             datetime.datetime.now() - datetime.timedelta(days=float(user_past) * 365)
-                     ).timestamp() * 1000
-    future_reference = (
-                               datetime.datetime.now() + datetime.timedelta(days=float(user_future) * 365)
-                       ).timestamp() * 1000
+    for code_name in main_codelist:
+        if not code_results[code_name]:
+            del code_results[code_name]
 
-    # Analyse au regard des dates d'entrée en vigueur et de fin de l'article
-    for code in code_results:
-        if code_results[code]:
-            yield "<h4> " + "La base Légifrance est interrogée : textes du " + main_codelist[
-                code
-            ] + "... </h4>"
-        for result in code_results[code]:
-            yield "<small> " + "Article " + result + "...  </small>"
-            article_id = get_article_id(
-                article_number=result, code_name=main_codelist[code]
-            )
-            if article_id is None:
+    # Récupération des caractéristiques de chaque article sur Légifrance
+    for code_name in code_results:
+        yield "<h4> " + "La base Légifrance est interrogée : textes du " + main_codelist[code_name] + "... </h4>"
+        for article in code_results[code_name]:
+            yield "<small> " + "Article " + article["number"] + "...  </small>"
+            article_id = get_article_id(article["number"], main_codelist[code_name])
+            article.update({"id": article_id})
+
+            if article["id"] is not None:
+                article_content = get_article_content(article["id"])
+                # article_text = article_content["texte"]
+                article_start = article_content["dateDebut"]
+                article_end = article_content["dateFin"]
+                article.update({"start": article_start, "end": article_end})
+
+    # Tri des articles pour affichage final
+    articles_not_found = []
+    articles_recently_modified = []
+    articles_changing_soon = []
+    articles_without_event = []
+
+    for code_name in code_results:
+        for article in code_results[code_name]:
+            if article["id"] is None:
                 articles_not_found.append(
-                    "Article " + result + " du " + main_codelist[code] + " non trouvé"
+                    "Article " + article["number"] + " du " + main_codelist[code_name] + " non trouvé"
                 )
             else:
-                donnees_article = get_article_content(article_id)
-                date_debut = donnees_article["dateDebut"]
-                date_fin = donnees_article["dateFin"]
-                if date_debut < past_reference and date_fin > future_reference:
+                article_hyperlink = """<a class="w3-text-blue" href="https://www.legifrance.gouv.fr/codes/article_lc/""" + \
+                                    article[
+                                        "id"] + """" target="_blank" rel="noopener">""" + article["number"] + """</a>"""
+
+                if article["start"] < past_reference and article["end"] > future_reference:
                     articles_without_event.append(
-                        "Article " + result + " du " + main_codelist[code]
+                        "Article " + article_hyperlink + " du " + main_codelist[code_name]
                     )
-                if date_debut > past_reference:
+                if article["start"] > past_reference:
                     articles_recently_modified.append(
                         "L'article "
-                        + result
+                        + article_hyperlink
                         + " du "
-                        + main_codelist[code]
+                        + main_codelist[code_name]
                         + " a été modifié le "
-                        + str(epoch_to_date(date_debut))
+                        + str(epoch_converter(article["start"]))
                     )
-                if date_fin < future_reference:
+                if article["end"] < future_reference:
                     articles_changing_soon.append(
                         "La version actuelle de l'article "
-                        + result
+                        + article_hyperlink
                         + " du "
-                        + main_codelist[code]
+                        + main_codelist[code_name]
                         + " n'est valable que jusqu'au "
-                        + str(epoch_to_date(date_fin))
+                        + str(epoch_converter(article["end"]))
                     )
-    # Utilisaton d'un template Bottle pour afficher les résultats
+
+    # Utilisation d'un template Bottle pour afficher les résultats
     yield template(
         "results",
         **{
@@ -369,7 +381,7 @@ if __name__ == "__main__":
     retry_strategy = Retry(
         total=3,
         status_forcelist=[429, 500, 502, 503, 504],
-        allowed_methods=["HEAD", "GET", "OPTIONS"],
+        allowed_methods=["HEAD", "GET", "POST", "OPTIONS"],
     )
     adapter = HTTPAdapter(max_retries=retry_strategy)
     session = requests.Session()

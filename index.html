@@ -1,57 +1,57 @@
 <!DOCTYPE html>
 <html lang=fr>
 <head>
- <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css"> 
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css"> 
 </head>
 <body>
 <div class="w3-container w3-blue-grey">
-<h1> Code is low</h1>
-<h5> Un programme expérimental par <a href="http://www.enetter.fr" target="_blank" rel="noopener">E. Netter</a> (v. 0.7) - codeislow@email.enetter.fr </h5>
+    <h1> Code is low</h1>
+    <h5> Un programme expérimental par <a href="http://www.enetter.fr" target="_blank" rel="noopener">E. Netter</a> (v. 0.7) - codeislow@email.enetter.fr </h5>
+    <p> <small> Source : <a href="https://www.dila.premier-ministre.gouv.fr/" target="_blank" rel="noopener">DILA</a> - Données <a href="http://legifrance.gouv.fr">Légifrance</a> exploitées en temps réel sous <a href="https://www.etalab.gouv.fr/wp-content/uploads/2017/04/ETALAB-Licence-Ouverte-v2.0.pdf" rel="noopener" target="_blank">licence ouverte 2.0</a>. </small> </p>
 </div>
 <br>
 <form class ="w3-container" action="/upload" method="post" enctype="multipart/form-data">
- <form action="/upload" method="post" enctype="multipart/form-data">
- <label> Choisissez un fichier (DOCX, ODT, PDF) : </label>
- <input type="file" name="upload" accept = ".docx, .odt, .pdf"/>
+<form action="/upload" method="post" enctype="multipart/form-data">
+    <label> Choisissez un fichier inférieur à 2 Mo (DOCX, ODT, PDF) : </label>
+    <input type="file" name="upload" accept = ".docx, .odt, .pdf"/>
  <br>
  <br>
-<label>Alerter en cas de variation des textes sur une période de </label>
-<input type="number" name="user_past" value="3" min="0" max="99" size="2"> an(s) vers le passé<br>
-<label>Alerter en cas de variation des textes sur une période de </label>
-<input type="number" name="user_future" value="3" min="0" max="99" size="2"> an(s) vers l'avenir
+    <label>Alerter en cas de variation des textes sur une période de </label>
+    <input type="number" name="user_past" value="3" min="0" max="99" size="2"> an(s) vers le passé<br>
+    <label>Alerter en cas de variation des textes sur une période de </label>
+    <input type="number" name="user_future" value="3" min="0" max="99" size="2"> an(s) vers l'avenir
 <br>
 <br>
-<label> Mot de passe : </label> <input type="password" name="password"/>
+    <label> Mot de passe : </label> <input type="password" name="password"/>
 <br>
 <br>
- <input type="submit" value="Soumettre" />
+    <input type="submit" value="Soumettre" />
 </form>
 <br>
 <br>
 
- <div class="w3-container w3-blue-grey">
-  <h4> Guide d'utilisation </h4>
+<div class="w3-container w3-blue-grey">
+    <h4> Guide d'utilisation </h4>
  </div>
- <div class="w3-margin">
-<p> Soumettez un texte au format <strong> DOCX ou ODT (de préférence) ou PDF </strong>.
-<p> Le format PDF n'est pas toujours lisible. Les résultats peuvent être faussés.
-<br>
-<br> Le programme recherchera des références à des articles de code (ex : "art. 1240 C. civ.", "article L. 110-1 du Code de commerce").
-<br> Il interrogera Légifrance à propos des articles détectés.
-<br>
-<br> Vous saurez ainsi : </p>
+<div class="w3-margin">
+    <p> Soumettez un texte au format <strong> DOCX ou ODT (de préférence) ou PDF </strong>.
+    Actuellement, la taille du fichier est <strong> limitée à 2 Mo </strong></p>
+    <p> Le format PDF n'est pas toujours lisible. Les résultats peuvent être faussés. </p>
+    <p> Le programme recherchera des références à des articles de code (ex : "art. 1240 C. civ.", "article L. 110-1 du Code de commerce").</p>
+    <p> Il interrogera Légifrance à propos des articles détectés. </p>
+    <p> Vous saurez ainsi : </p>
 </div>
-	<ul>
+<ul>
 	<li> Si le texte est introuvable sur Légifrance (abrogé, faute de frappe...) </li>
 	<li> Si le texte a été récemment modifié (période définie par vous) (N.B. : seule la modification la plus récente est mentionnée) </li>
-	<li> Si le texte va être modifié prochainement (période définie par vous) </li>
-	</ul>
+	<li> Si le texte va être modifié prochainement (période définie par vous) N.B. : seule la version à venir la plus proche est mentionnée)</li>
+</ul>
 <br>
 <br>
- <div class="w3-container w3-blue-grey">
-  <h4> Codes actuellement testés </h4>
- </div>
-	<ul class="w3-ul w3-border">
+<div class="w3-container w3-blue-grey">
+    <h4> Codes actuellement testés </h4>
+</div>
+<ul class="w3-ul w3-border">
 	<li> Code des assurances </li>	
 	<li> Code civil </li>
 	<li> Code de commerce </li>
@@ -66,7 +66,7 @@
 	<li> Code de la sécurité intérieure </li>
 	<li> Code de la sécurité sociale </li>
     <li> Code du travail </li>
-	</ul>
+</ul>
    
 
  
