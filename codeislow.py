@@ -11,16 +11,12 @@ from pathlib import Path
 import docx
 import requests
 from PyPDF2 import PdfReader
-from bottle import Bottle
-from bottle import request, static_file, template
-from bottle_sslify import SSLify
+from bottle import route, request, static_file, run, template
 from dotenv import load_dotenv, find_dotenv
 from odf import text, teletype
 from odf.opendocument import load
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
-
-app = Bottle()
 
 
 # Authentification sur Légifrance à l'aide de secrets conservés dans .env
@@ -242,13 +238,13 @@ codes_regex = {
 
 
 # Affichage de la page web d'accueil
-@app.route("/")
+@route("/")
 def root():
     return static_file("index.html", root=".")
 
 
 # Actions à effectuer à l'upload du document de l'utilisateur
-@app.route("/upload", method="POST")
+@route("/upload", method="POST")
 def do_upload():
     load_dotenv(find_dotenv())
     password = os.environ.get("PASSWORD")
@@ -398,8 +394,8 @@ if __name__ == "__main__":
         "Content-Type": "application/json",
     }
 
+
 if os.environ.get("APP_LOCATION") == "heroku":
-    SSLify(app)
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+    run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
 else:
-    app.run(host="localhost", port=8080, debug=True)
+    run(host="localhost", port=8080, debug=True)
