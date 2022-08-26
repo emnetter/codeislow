@@ -196,6 +196,7 @@ main_codelist = {
     "CSS": "Code de la sécurité sociale",
     "CESEDA": "Code de l'entrée et du séjour des étrangers et du droit d'asile",
     "CGCT": "Code général des collectivités territoriales",
+    "CPCE": "Code des postes et des communications électroniques"
 }
 
 reg_beginning = {
@@ -222,6 +223,7 @@ reg_ending = {
     "CSS": r"\s*(?:du Code de la sécurité sociale|C\. sec\. soc\.|CSS|du CSS)",
     "CESEDA": r"\s*(?:du Code de l'entrée et du séjour des étrangers et du droit d'asile|CESEDA|du CESEDA)",
     "CGCT": r"\s*(?:du Code général des collectivités territoriales|CGCT|du CGCT)",
+    "CPCE": r"\s*(?:du Code des postes et des communications électroniques| du CPCE)",
 }
 
 codes_regex = {
@@ -239,6 +241,7 @@ codes_regex = {
     "CSS": reg_beginning["UNIVERSAL"] + reg_ending["CSS"],
     "CESEDA": reg_beginning["UNIVERSAL"] + reg_ending["CESEDA"],
     "CGCT": reg_beginning["UNIVERSAL"] + reg_ending["CGCT"],
+    "CPCE": reg_beginning["UNIVERSAL"] + reg_ending["CPCE"],
 }
 
 
