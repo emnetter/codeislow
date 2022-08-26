@@ -380,6 +380,8 @@ def do_upload():
         },
     )
 
+    sys.exit()
+
 
 # Corps du programme
 
