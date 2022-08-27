@@ -177,7 +177,7 @@ def epoch_converter(epoch):
     converted_date = datetime.datetime(1970, 1, 1) + datetime.timedelta(
         seconds=(epoch / 1000)
     )
-    simplified_date = converted_date.strftime('%Y-%m-%d')
+    simplified_date = converted_date.strftime("%d-%m-%Y")
     return simplified_date
 
 
