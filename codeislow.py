@@ -43,7 +43,11 @@ def legifrance_auth():
     )
     response = res.json()
     token = response["access_token"]
-    return token
+    legifrance_headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json",
+    }
+    return legifrance_headers
 
 
 def spaces_remover(string):
@@ -153,7 +157,6 @@ def get_article_id(article_number, code_name):
         article_id = article_informations["results"][0]["sections"][0]["extracts"][0][
             "id"
         ]
-        # print("return sera ", article_id)
         return article_id
 
 
@@ -254,6 +257,9 @@ def root():
 # Actions à effectuer à l'upload du document de l'utilisateur
 @app.route("/upload", method="POST")
 def do_upload():
+    global headers
+    headers = legifrance_auth()
+
     load_dotenv(find_dotenv())
     password = os.environ.get("PASSWORD")
     user_password = request.forms.get("password")
@@ -380,8 +386,6 @@ def do_upload():
         },
     )
 
-    sys.exit()
-
 
 # Corps du programme
 
@@ -397,12 +401,6 @@ if __name__ == "__main__":
     session = requests.Session()
     session.mount("https://", adapter)
     session.mount("http://", adapter)
-
-    access_token = legifrance_auth()
-    headers = {
-        "Authorization": f"Bearer {access_token}",
-        "Content-Type": "application/json",
-    }
 
 if os.environ.get("APP_LOCATION") == "heroku":
     SSLify(app)
