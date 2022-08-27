@@ -55,13 +55,20 @@ def spaces_remover(string):
 
 
 # Ouverture du fichier utilisateur
+# Indicateur de progression quand le fichier est suffisamment long
 def file_opener(ext, file_path):
     article_detector = re.compile(r"(^.*(?:article|art\.).*$)", flags=re.I | re.M)
     paragraphsdoc = []
+    previous_progress = int
     f = open(file_path, "rb")
     if ext == ".docx":
         document = docx.Document(f)
         for i in range(len(document.paragraphs)):
+            if len(document.paragraphs) > 20:
+                progress = round((i / len(document.paragraphs)) * 100)
+                if progress % 10 == 0 and previous_progress != progress:
+                    previous_progress = progress
+                    yield str(progress) + " % ... "
             paragraph = document.paragraphs[i].text
             if article_detector.search(paragraph) is not None:
                 paragraphsdoc.append(paragraph)
@@ -69,12 +76,23 @@ def file_opener(ext, file_path):
         document = load(f)
         texts = document.getElementsByType(text.P)
         for i in range(len(texts)):
+            if (len(texts)) > 20:
+                progress = round((i / len(texts)) * 100)
+                if progress % 10 == 0 and previous_progress != progress:
+                    previous_progress = progress
+                    yield str(progress) + " % ... "
             paragraph = teletype.extractText(texts[i])
             if article_detector.search(paragraph) is not None:
                 paragraphsdoc.append(paragraph)
     elif ext == ".pdf":
         reader = PdfReader(file_path)
-        for page in reader.pages:
+        for i in range(len(reader.pages)):
+            if (len(reader.pages)) > 10:
+                progress = round((i / len(reader.pages)) * 100)
+                if previous_progress != progress:
+                    previous_progress = progress
+                    yield str(progress) + " % ... "
+            page = reader.pages[i]
             page_text = (page.extract_text())
             if article_detector.search(page_text) is not None:
                 paragraphsdoc.append(page_text)
@@ -289,8 +307,8 @@ def do_upload():
     if upload is None:
         yield "Pas de fichier"
         sys.exit()
-    name, ext = os.path.splitext(upload.filename)
-    if ext not in (".odt", ".docx", ".pdf"):
+    doc_name, doc_ext = os.path.splitext(upload.filename)
+    if doc_ext not in (".odt", ".docx", ".pdf"):
         yield "Extension incorrecte"
         sys.exit()
     save_path = Path.cwd() / Path("tmp")
@@ -312,9 +330,9 @@ def do_upload():
     yield """<h1> Code is low</h1>"""
     yield """</div>"""
     yield "<h3> Analyse en cours. Veuillez patienter... </h3>"
-    yield "<h4> Le fichier " + ext.upper() + " est actuellement parcouru. </h4>"
+    yield "<h4> Le fichier " + doc_name + doc_ext.upper() + " est actuellement parcouru. </h4>"
 
-    cleantext = file_opener(ext, file_path)
+    cleantext = yield from file_opener(doc_ext, file_path)
 
     # Suppression du fichier utilisateur, devenu inutile
     os.remove(file_path)
