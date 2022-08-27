@@ -303,15 +303,16 @@ def do_upload():
         yield "ERREUR : fichier d'une taille supérieure à 2 Mo"
         sys.exit()
     yield "<h3> Analyse en cours. Veuillez patienter... </h3>"
-    yield "<h5> Le fichier est actuellement parcouru. </h5>"
+    yield "<h4> Le fichier est actuellement parcouru. </h4>"
     cleantext = file_opener(ext, file_path)
 
     # Suppression du fichier utilisateur, devenu inutile
     os.remove(file_path)
 
     # Mise en œuvre des expressions régulières
-    yield "<h5> Les différents codes de droit français sont recherchés. </h5>"
+    yield "<h4> Les différents codes de droit français sont recherchés. </h4>"
     for code_name in main_codelist:
+        yield "<small> " + code_name + "...  </small>"
         code_results[code_name] = code_detector(code_name, cleantext)
 
     for code_name in main_codelist:
@@ -334,6 +335,7 @@ def do_upload():
                 article.update({"start": article_start, "end": article_end})
 
     # Tri des articles pour affichage final
+    yield "<h5> Tri des résultats en cours. </h5>"
     articles_not_found = []
     articles_recently_modified = []
     articles_changing_soon = []
