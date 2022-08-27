@@ -25,4 +25,3 @@ tmp/these.pdf
 .idea/.name
 .idea/inspectionProfiles/Project_Default.xml
 __pycache__/bottle_sslify.cpython-39.pyc
-__pycache__/bottle_sslify.cpython-38.pyc
