@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+
 import datetime
 import json
 import os
@@ -42,7 +43,11 @@ def legifrance_auth():
     )
     response = res.json()
     token = response["access_token"]
-    return token
+    legifrance_headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json",
+    }
+    return legifrance_headers
 
 
 def spaces_remover(string):
@@ -50,13 +55,20 @@ def spaces_remover(string):
 
 
 # Ouverture du fichier utilisateur
+# Indicateur de progression quand le fichier est suffisamment long
 def file_opener(ext, file_path):
     article_detector = re.compile(r"(^.*(?:article|art\.).*$)", flags=re.I | re.M)
     paragraphsdoc = []
+    previous_progress = int
     f = open(file_path, "rb")
     if ext == ".docx":
         document = docx.Document(f)
         for i in range(len(document.paragraphs)):
+            if len(document.paragraphs) > 20:
+                progress = round((i / len(document.paragraphs)) * 100)
+                if progress % 10 == 0 and previous_progress != progress:
+                    previous_progress = progress
+                    yield str(progress) + " % ... "
             paragraph = document.paragraphs[i].text
             if article_detector.search(paragraph) is not None:
                 paragraphsdoc.append(paragraph)
@@ -64,12 +76,23 @@ def file_opener(ext, file_path):
         document = load(f)
         texts = document.getElementsByType(text.P)
         for i in range(len(texts)):
+            if (len(texts)) > 20:
+                progress = round((i / len(texts)) * 100)
+                if progress % 10 == 0 and previous_progress != progress:
+                    previous_progress = progress
+                    yield str(progress) + " % ... "
             paragraph = teletype.extractText(texts[i])
             if article_detector.search(paragraph) is not None:
                 paragraphsdoc.append(paragraph)
     elif ext == ".pdf":
         reader = PdfReader(file_path)
-        for page in reader.pages:
+        for i in range(len(reader.pages)):
+            if (len(reader.pages)) > 10:
+                progress = round((i / len(reader.pages)) * 100)
+                if previous_progress != progress:
+                    previous_progress = progress
+                    yield str(progress) + " % ... "
+            page = reader.pages[i]
             page_text = (page.extract_text())
             if article_detector.search(page_text) is not None:
                 paragraphsdoc.append(page_text)
@@ -152,7 +175,6 @@ def get_article_id(article_number, code_name):
         article_id = article_informations["results"][0]["sections"][0]["extracts"][0][
             "id"
         ]
-        # print("return sera ", article_id)
         return article_id
 
 
@@ -173,7 +195,7 @@ def epoch_converter(epoch):
     converted_date = datetime.datetime(1970, 1, 1) + datetime.timedelta(
         seconds=(epoch / 1000)
     )
-    simplified_date = converted_date.strftime('%Y-%m-%d')
+    simplified_date = converted_date.strftime("%d-%m-%Y")
     return simplified_date
 
 
@@ -195,6 +217,7 @@ main_codelist = {
     "CSS": "Code de la sécurité sociale",
     "CESEDA": "Code de l'entrée et du séjour des étrangers et du droit d'asile",
     "CGCT": "Code général des collectivités territoriales",
+    "CPCE": "Code des postes et des communications électroniques"
 }
 
 reg_beginning = {
@@ -221,6 +244,7 @@ reg_ending = {
     "CSS": r"\s*(?:du Code de la sécurité sociale|C\. sec\. soc\.|CSS|du CSS)",
     "CESEDA": r"\s*(?:du Code de l'entrée et du séjour des étrangers et du droit d'asile|CESEDA|du CESEDA)",
     "CGCT": r"\s*(?:du Code général des collectivités territoriales|CGCT|du CGCT)",
+    "CPCE": r"\s*(?:du Code des postes et des communications électroniques| du CPCE)",
 }
 
 codes_regex = {
@@ -238,6 +262,7 @@ codes_regex = {
     "CSS": reg_beginning["UNIVERSAL"] + reg_ending["CSS"],
     "CESEDA": reg_beginning["UNIVERSAL"] + reg_ending["CESEDA"],
     "CGCT": reg_beginning["UNIVERSAL"] + reg_ending["CGCT"],
+    "CPCE": reg_beginning["UNIVERSAL"] + reg_ending["CPCE"],
 }
 
 
@@ -250,6 +275,9 @@ def root():
 # Actions à effectuer à l'upload du document de l'utilisateur
 @app.route("/upload", method="POST")
 def do_upload():
+    global headers
+    headers = legifrance_auth()
+
     load_dotenv(find_dotenv())
     password = os.environ.get("PASSWORD")
     user_password = request.forms.get("password")
@@ -279,8 +307,8 @@ def do_upload():
     if upload is None:
         yield "Pas de fichier"
         sys.exit()
-    name, ext = os.path.splitext(upload.filename)
-    if ext not in (".odt", ".docx", ".pdf"):
+    doc_name, doc_ext = os.path.splitext(upload.filename)
+    if doc_ext not in (".odt", ".docx", ".pdf"):
         yield "Extension incorrecte"
         sys.exit()
     save_path = Path.cwd() / Path("tmp")
@@ -292,16 +320,27 @@ def do_upload():
     if file_size > 2000000:
         yield "ERREUR : fichier d'une taille supérieure à 2 Mo"
         sys.exit()
+
+    yield "<!DOCTYPE html>"
+    yield "<head>"
+    yield """<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">"""
+    yield """</head>"""
+    yield """<body>"""
+    yield """<div class="w3-container w3-blue-grey">"""
+    yield """<h1> Code is low</h1>"""
+    yield """</div>"""
     yield "<h3> Analyse en cours. Veuillez patienter... </h3>"
-    yield "<h5> Le fichier est actuellement parcouru. </h5>"
-    cleantext = file_opener(ext, file_path)
+    yield "<h4> Le fichier " + doc_name + doc_ext.upper() + " est actuellement parcouru. </h4>"
+
+    cleantext = yield from file_opener(doc_ext, file_path)
 
     # Suppression du fichier utilisateur, devenu inutile
     os.remove(file_path)
 
     # Mise en œuvre des expressions régulières
-    yield "<h5> Les différents codes de droit français sont recherchés. </h5>"
+    yield "<h4> Les différents codes de droit français sont recherchés. </h4>"
     for code_name in main_codelist:
+        yield "<small> " + code_name + "...  </small>"
         code_results[code_name] = code_detector(code_name, cleantext)
 
     for code_name in main_codelist:
@@ -324,6 +363,7 @@ def do_upload():
                 article.update({"start": article_start, "end": article_end})
 
     # Tri des articles pour affichage final
+    yield "<h5> Tri des résultats en cours. </h5>"
     articles_not_found = []
     articles_recently_modified = []
     articles_changing_soon = []
@@ -391,12 +431,6 @@ if __name__ == "__main__":
     session = requests.Session()
     session.mount("https://", adapter)
     session.mount("http://", adapter)
-
-    access_token = legifrance_auth()
-    headers = {
-        "Authorization": f"Bearer {access_token}",
-        "Content-Type": "application/json",
-    }
 
 if os.environ.get("APP_LOCATION") == "heroku":
     SSLify(app)
