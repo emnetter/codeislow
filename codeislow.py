@@ -302,8 +302,18 @@ def do_upload():
     if file_size > 2000000:
         yield "ERREUR : fichier d'une taille supérieure à 2 Mo"
         sys.exit()
+
+    yield "<!DOCTYPE html>"
+    yield "<head>"
+    yield """<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">"""
+    yield """</head>"""
+    yield """<body>"""
+    yield """<div class="w3-container w3-blue-grey">"""
+    yield """<h1> Code is low</h1>"""
+    yield """</div>"""
     yield "<h3> Analyse en cours. Veuillez patienter... </h3>"
-    yield "<h4> Le fichier est actuellement parcouru. </h4>"
+    yield "<h4> Le fichier " + ext.upper() + " est actuellement parcouru. </h4>"
+
     cleantext = file_opener(ext, file_path)
 
     # Suppression du fichier utilisateur, devenu inutile
