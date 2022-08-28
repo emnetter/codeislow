@@ -5,18 +5,21 @@
     <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
 </head>
 <body>
+    
 <div class="w3-container w3-blue-grey">
-    <h1> Code is low</h1>
+    <h1> <a href="https://codeislow.enetter.fr">Code is low</a> - Résultats</h1>
 </div>
+
 <p class="w3-margin"> <strong> Cliquez sur les numéros d'articles pour les ouvrir directement dans Légifrance </strong> et accéder à davantage d'informations (hors textes non trouvés).</p>
-	<div class="w3-panel w3-red">
+
+<div class="w3-panel w3-red">
 		<h3> Textes non trouvés sur Légifrance </h3>
-	</div>
-			<ul class="w3-ul w3-border">
+</div>
+            <ul class="w3-ul w3-border">
 			% for result in articles_not_found:
              <li>{{!result}}</li>
           % end
-			</ul>
+    </ul>
 	<div class="w3-panel w3-yellow">
 		<h3> Textes modifiés il y a moins de {{user_past}} an(s) </h3>
 	</div>
@@ -42,3 +45,4 @@
           % end
 			</ul>
 </body>
+</html>

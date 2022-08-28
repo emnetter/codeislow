@@ -24,5 +24,7 @@ tmp/these.pdf
 .DS_Store
 .idea/.name
 .idea/inspectionProfiles/Project_Default.xml
-__pycache__/bottle_sslify.cpython-39.pyc
-__pycache__/bottle_sslify.cpython-38.pyc
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]

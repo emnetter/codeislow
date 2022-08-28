@@ -1,0 +1,9 @@
+
+Le développeur propose, à titre gracieux et non-professionnel, un outil expérimental d'aide au traitement de textes juridiques. Il décline toute responsabilité pour le cas où les références à des articles de codes de droit français ne seraient pas correctement détectées. La responsabilité de l'exactitude des informations figurant sur la base de données Légifrance relève, quant à elle, exclusivement de la DILA.
+
+Pour le surplus, l'utilisation de ce logiciel est soumise à la licence CeCILL.
+
+Une copie du texte de cette licence se trouve dans le sous-répertoire
+"doc", dans le fichier appelÈ "CeCILL_V2.1-fr.txt". Veuillez en lire
+attentivement les clauses. Vous ne pourrez utiliser cette copie de la
+distribution logicielle "codeislow" que si vous les acceptez.
