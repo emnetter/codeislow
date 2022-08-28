@@ -6,7 +6,7 @@
 <body>
 <div class="w3-container w3-blue-grey">
     <h1> Code is low</h1>
-    <h5> Un programme expérimental par <a href="http://www.enetter.fr" target="_blank" rel="noopener">E. Netter</a> (v. 0.7) - codeislow@email.enetter.fr </h5>
+    <h5> Un programme expérimental par <a href="http://www.enetter.fr" target="_blank" rel="noopener">E. Netter</a> (v. 0.8) - codeislow@email.enetter.fr </h5>
     <p> <small> Source : <a href="https://www.dila.premier-ministre.gouv.fr/" target="_blank" rel="noopener">DILA</a> - Données <a href="http://legifrance.gouv.fr">Légifrance</a> exploitées en temps réel sous <a href="https://www.etalab.gouv.fr/wp-content/uploads/2017/04/ETALAB-Licence-Ouverte-v2.0.pdf" rel="noopener" target="_blank">licence ouverte 2.0</a>. </small> </p>
 </div>
 <br>
@@ -27,6 +27,7 @@
 <p><strong> En cliquant sur "soumettre", vous reconnaissez avoir pris connaissance des conditions d'utilisation et de la politique de confidentialité ci-dessous. </strong></p>
     <input type="submit" value="Soumettre" />
 </form>
+</form>
 <br>
 <br>
 
@@ -37,63 +38,84 @@
     <p> Soumettez un texte au format <strong> DOCX ou ODT (de préférence) ou PDF </strong>.
     Actuellement, la taille du fichier est <strong> limitée à 2 Mo </strong></p>
     <p> Le format PDF n'est pas toujours lisible. Les résultats peuvent être faussés. </p>
-    <p> Le programme recherchera des références à des articles de code (ex : "art. 1240 C. civ.", "article L. 110-1 du Code de commerce").</p>
-    <p> Il interrogera Légifrance à propos des articles détectés. </p>
-    <p> Vous saurez ainsi : </p>
-</div>
-<ul>
-	<li> Si le texte est introuvable sur Légifrance (abrogé, faute de frappe...) </li>
-	<li> Si le texte a été récemment modifié (période définie par vous) (N.B. : seule la modification la plus récente est mentionnée) </li>
-	<li> Si le texte va être modifié prochainement (période définie par vous) N.B. : seule la version à venir la plus proche est mentionnée)</li>
-</ul>
+    <p> Le programme recherchera des références à des articles de code (ex : "art. 1240 C. civ.", "article L. 110-1 du Code de commerce"). Il interrogera Légifrance à propos des articles détectés. Vous saurez ainsi : </p>
+
+    <ul>
+	   <li> Si le texte est <strong> introuvable</strong> sur Légifrance (abrogé, faute de frappe...) </li>
+	   <li> Si le texte a été <strong>récemment modifié</strong> (période définie par vous) (N.B. : seule la modification la plus récente est mentionnée) </li>
+	   <li> Si le texte va être <strong>modifié prochainement </strong> (période définie par vous) N.B. : seule la version à venir la plus proche est mentionnée)</li>
+    </ul>
+    </div>
 <br>
 <br>
     
-<div class="w3-container w3-blue-grey">
+<button onclick="accordion('terms')" class="w3-btn w3-block w3-blue-grey w3-left-align w3-hover-black">
     <h4> Conditions d'utilisation </h4>
-</div>   
-    <p class="w3-margin"> Le développeur propose, <strong> à titre gracieux et non-professionnel</strong>, un outil <strong> expérimental </strong> d'aide au traitement de textes juridiques. Il décline toute responsabilité pour le cas où les références à des articles de codes de droit français ne seraient pas correctement détectées. La responsabilité de l'exactitude des informations figurant sur la base de données <a href="https://www.legifrance.gouv.fr/">Légifrance</a> relève, quant à elle, exclusivement de la <a href="https://www.dila.premier-ministre.gouv.fr/">DILA</a>. Pour le surplus, l'utilisation de ce logiciel est soumise à la <a href="https://cecill.info/licences/Licence_CeCILL_V2.1-fr.html">licence CeCILL</a>.</p>
+</button>
     
-<div class="w3-container w3-blue-grey">
-    <h4> Politique de confidentialité </h4>
+<div id ="terms" class="w3-margin w3-container w3-hide">
+    <p> Le développeur propose, <strong> à titre gracieux et non-professionnel</strong>, un outil <strong> expérimental </strong> d'aide au traitement de textes juridiques. Il décline toute responsabilité pour le cas où les références à des articles de codes de droit français ne seraient pas correctement détectées. La responsabilité de l'exactitude des informations figurant sur la base de données <a href="https://www.legifrance.gouv.fr/">Légifrance</a> relève, quant à elle, exclusivement de la <a href="https://www.dila.premier-ministre.gouv.fr/">DILA</a>. Pour le surplus, l'utilisation de ce logiciel est soumise à la <a href="https://cecill.info/licences/Licence_CeCILL_V2.1-fr.html">licence CeCILL</a>.</p>
 </div>
-    <p class="w3-margin">L'application web est proposée par E. Netter, à titre individuel, sans impliquer l'université à laquelle il appartient. E. Netter est responsable du traitement des données à caractère personnel que vos documents pourraient contenir, au sens du <a href="https://www.cnil.fr/fr/rgpd-de-quoi-parle-t-on">règlement général sur la protection des données</a> et de la <a href="https://www.cnil.fr/fr/la-loi-informatique-et-libertes">loi informatique et libertés</a>. Le serveur est opéré par <a href="http://www.heroku.com">Heroku</a>, qui occupe une position de sous-traitant des données, rémunéré par E. Netter. Vos données sont traitées sur le fondement de la nécessité pour l'exécution d'une prestation de service dont vous demandez à bénéficier (<a href="https://www.cnil.fr/fr/reglement-europeen-protection-donnees/chapitre2#Article6">art. 6, 1, b RGPD</a>).
+    
+<button onclick="accordion('privacy')" class="w3-btn w3-block w3-blue-grey w3-left-align w3-hover-black">
+    <h4> Politique de confidentialité </h4>
+</button>
+    
+<div id="privacy" class="w3-margin w3-container w3-hide">
+    
+    <p>L'application web est proposée par E. Netter, à titre individuel, sans impliquer l'université à laquelle il appartient. E. Netter est responsable du traitement des données à caractère personnel que vos documents pourraient contenir, au sens du <a href="https://www.cnil.fr/fr/rgpd-de-quoi-parle-t-on">règlement général sur la protection des données</a> et de la <a href="https://www.cnil.fr/fr/la-loi-informatique-et-libertes">loi informatique et libertés</a>. Le serveur est opéré par <a href="http://www.heroku.com">Heroku</a>, qui occupe une position de sous-traitant des données, rémunéré par E. Netter. Vos données sont traitées sur le fondement de la nécessité pour l'exécution d'une prestation de service dont vous demandez à bénéficier (<a href="https://www.cnil.fr/fr/reglement-europeen-protection-donnees/chapitre2#Article6">art. 6, 1, b RGPD</a>).
     </p>
 
-    <p class="w3-margin">Conformément <a href="https://github.com/emnetter/codeislow" target="_blank" rel="noopener">au code source public</a>, votre document est copié dans un fichier provisoire uniquement le temps d'être traité, puis supprimé (ligne "os.remove") avant même l'affichage des résultats. Au cas où la suppression échouerait en raison d'un bug, les fichiers sont automatiquement détruits par Heroku toutes les 24h, et le développeur s'engage à ne pas en prendre connaissance. Si vous souhaitez cependant qu'il examine votre document afin de comprendre pourquoi un examen a échoué, vous pouvez choisir de lui adresser, à l'adresse email située en haut de page. Il s'engage alors à ne l'exploiter à aucune autre fin puis à la détruire. L'échange entre votre navigateur et le serveur doit être chiffré. Si votre navigateur présente un cadenas ouvert ou indique que la connexion n'est pas sécurisée, il s'agit d'un dysfonctionnement et l'outil ne devrait pas être utilisé.</p>
+    <p>Conformément <a href="https://github.com/emnetter/codeislow" target="_blank" rel="noopener">au code source public</a>, votre document est copié dans un fichier provisoire uniquement le temps d'être traité, puis supprimé (ligne "os.remove") avant même l'affichage des résultats. Au cas où la suppression échouerait en raison d'un bug, les fichiers sont automatiquement détruits par Heroku toutes les 24h, et le développeur s'engage à ne pas en prendre connaissance. Si vous souhaitez cependant qu'il examine votre document afin de comprendre pourquoi un examen a échoué, vous pouvez choisir de lui adresser, à l'adresse email située en haut de page. Il s'engage alors à ne l'exploiter à aucune autre fin puis à la détruire. L'échange entre votre navigateur et le serveur doit être chiffré. Si votre navigateur présente un cadenas ouvert ou indique que la connexion n'est pas sécurisée, il s'agit d'un dysfonctionnement et l'outil ne devrait pas être utilisé.</p>
     
-    <p class="w3-margin">Il est également possible de préférer à cette application web une exécution locale du <a href="https://github.com/emnetter/codeislow">code source</a> sur votre propre système informatique. C'est le mode vivement recommandé pour le cas où votre document contiendrait des données confidentielles, particulièrement sensibles, ou soumises au secret professionnel. Rapprochez-vous de la personne responsable de vos systèmes d'information. L'ouverture d'un <a href="https://developer.aife.economie.gouv.fr/">compte développeur PISTE</a> (rapide et gratuite) sera alors nécessaire. Des instructions d'aide à la mise en place pourront être proposées par la suite.</p>
+    <p>Il est également possible de préférer à cette application web une exécution locale du <a href="https://github.com/emnetter/codeislow">code source</a> sur votre propre système informatique. C'est le mode vivement recommandé pour le cas où votre document contiendrait des données confidentielles, particulièrement sensibles, ou soumises au secret professionnel. Rapprochez-vous de la personne responsable de vos systèmes d'information. L'ouverture d'un <a href="https://developer.aife.economie.gouv.fr/">compte développeur PISTE</a> (rapide et gratuite) sera alors nécessaire. Des instructions d'aide à la mise en place pourront être proposées par la suite.</p>
     
-    <p class="w3-margin">Les droits qui vous sont reconnus par le RGPD et la LIL <a href="https://enetter.fr/la-personne/chapitre-1-lidentite-numerique/section-2-la-protection-de-lidentite-numerique/ii-la-gestion-personnalisee-accessible-aux-individus/b-en-aval-de-la-collecte-des-donnees/">vous sont présentés</a> par l'auteur sur son site de chercheur en droit.</p>
+    <p>Les droits qui vous sont reconnus par le RGPD et la LIL <a href="https://enetter.fr/la-personne/chapitre-1-lidentite-numerique/section-2-la-protection-de-lidentite-numerique/ii-la-gestion-personnalisee-accessible-aux-individus/b-en-aval-de-la-collecte-des-donnees/">vous sont présentés</a> par l'auteur sur son site de chercheur en droit.</p>
     
-    <p class="w3-margin">Si vous estimez que vos droits ont été méconnus, je vous invite à me contacter avant toute autre démarche, à l'adresse email figurant en haut de la page. Vous disposez du droit de déposer une réclamation <a href="http://cnil.fr" target="_blank" rel="noopener noreferrer">auprès de la CNIL</a>.</p>
+    <p>Si vous estimez que vos droits ont été méconnus, je vous invite à me contacter avant toute autre démarche, à l'adresse email figurant en haut de la page. Vous disposez du droit de déposer une réclamation <a href="http://cnil.fr" target="_blank" rel="noopener noreferrer">auprès de la CNIL</a>.</p>
     
-<div class="w3-container w3-blue-grey">
-    <h4> Codes actuellement testés [formes abrégées reconnues] </h4>
 </div>
+
+<button onclick="accordion('testedCodes')" class="w3-btn w3-block w3-blue-grey w3-left-align w3-hover-black">
+        <h4> Codes actuellement testés [formes abrégées reconnues] </h4> </button>
+
+    
+<div id="testedCodes" class="w3-container w3-hide">
+    
     <p class="w3-margin"> <strong> La forme longue est évidemment reconnue. La casse est indifférente.</strong> N'hésitez pas à demander l'ajout d'autres codes. </p>
-<ul class="w3-ul w3-border">
-	<li> Code des assurances [C. assur.]</li>	
-	<li> Code civil [C. civ.] </li>
-	<li> Code de commerce [C. com.] </li>
-	<li> Code de la consommation [C. conso.] </li>
-	<li> Code de l'entrée et du séjour des étrangers et du droit d'asile [CESEDA] </li>
-	<li> Code général des collectivités territoriales [CGCT] </li>
-	<li> Code pénal [C. pén.] </li>
-    <li> Code des postes et des communications électroniques [CPCE] </li>
-	<li> Code de procédure civile [C. pr. civ., CPC]</li>
-	<li> Code de procédure pénale [CPP] </li>
-	<li> Code de la propriété intellectuelle [C. pr. int., CPI]</li>
-	<li> Code de la santé publique [C. sant. pub., CSP] </li>
-	<li> Code de la sécurité intérieure [CSI] </li>
-	<li> Code de la sécurité sociale [CSS] </li>
-    <li> Code du travail [C. trav.] </li>
-</ul>
+    
+    <ul class="w3-ul w3-border">
+	   <li> Code des assurances [C. assur.]</li>	
+	   <li> Code civil [C. civ.] </li>
+	   <li> Code de commerce [C. com.] </li>
+	   <li> Code de la consommation [C. conso.] </li>
+	   <li> Code de l'entrée et du séjour des étrangers et du droit d'asile [CESEDA] </li>
+	   <li> Code général des collectivités territoriales [CGCT] </li>
+	   <li> Code pénal [C. pén.] </li>
+        <li> Code des postes et des communications électroniques [CPCE] </li>
+	   <li> Code de procédure civile [C. pr. civ., CPC]</li>
+	   <li> Code de procédure pénale [CPP] </li>
+	   <li> Code de la propriété intellectuelle [C. pr. int., CPI]</li>
+	   <li> Code de la santé publique [C. sant. pub., CSP] </li>
+	   <li> Code de la sécurité intérieure [CSI] </li>
+	   <li> Code de la sécurité sociale [CSS] </li>
+        <li> Code du travail [C. trav.] </li>
+    </ul>
+</div>
    
 
- 
-
-	
+ <script>
+function accordion(id) {
+  var x = document.getElementById(id);
+  if (x.className.indexOf("w3-show") == -1) {
+    x.className += " w3-show";
+  } else { 
+    x.className = x.className.replace(" w3-show", "");
+  }
+}
+</script>
+</body>
+</html>
 	
 	
 	
