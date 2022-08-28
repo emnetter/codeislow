@@ -280,10 +280,10 @@ def do_upload():
 
     load_dotenv(find_dotenv())
     password = os.environ.get("PASSWORD")
-    user_password = request.forms.get("password")
-    if user_password != password:
-        yield "Mot de passe incorrect"
-        sys.exit()
+    # user_password = request.forms.get("password")
+    # if user_password != password:
+    #     yield "Mot de passe incorrect"
+    #     sys.exit()
 
     code_results = {}
     for code in main_codelist:
