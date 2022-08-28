@@ -1,0 +1,7 @@
+Cette copie de la distribution logicielle "codeislow" est distribuée
+selon les termes de la licence de logiciel libre CeCILL-C.
+
+Une copie du texte de cette licence se trouve dans le sous-répertoire
+"doc", dans le fichier appelÈ "CeCILL-C_V2.1-fr.txt". Veuillez en lire
+attentivement les clauses. Vous ne pourrez utiliser cette copie de la
+distribution logicielle "codeislow" que si vous les acceptez.
