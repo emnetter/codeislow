@@ -217,7 +217,9 @@ main_codelist = {
     "CSS": "Code de la sécurité sociale",
     "CESEDA": "Code de l'entrée et du séjour des étrangers et du droit d'asile",
     "CGCT": "Code général des collectivités territoriales",
-    "CPCE": "Code des postes et des communications électroniques"
+    "CPCE": "Code des postes et des communications électroniques",
+    "CENV": "Code de l'environnement",
+    "CJA": "Code de justice administrative",
 }
 
 reg_beginning = {
@@ -244,7 +246,9 @@ reg_ending = {
     "CSS": r"\s*(?:du Code de la sécurité sociale|C\. sec\. soc\.|CSS|du CSS)",
     "CESEDA": r"\s*(?:du Code de l'entrée et du séjour des étrangers et du droit d'asile|CESEDA|du CESEDA)",
     "CGCT": r"\s*(?:du Code général des collectivités territoriales|CGCT|du CGCT)",
-    "CPCE": r"\s*(?:du Code des postes et des communications électroniques| du CPCE)",
+    "CPCE": r"\s*(?:du Code des postes et des communications électroniques|CPCE|du CPCE)",
+    "CENV": r"\s*(?:du Code de l'environnement|C. envir.|CE|du CE)",
+    "CJA": r"\s*(?:du Code de justice administrative|CJA|du CJA)",
 }
 
 codes_regex = {
@@ -263,6 +267,9 @@ codes_regex = {
     "CESEDA": reg_beginning["UNIVERSAL"] + reg_ending["CESEDA"],
     "CGCT": reg_beginning["UNIVERSAL"] + reg_ending["CGCT"],
     "CPCE": reg_beginning["UNIVERSAL"] + reg_ending["CPCE"],
+    "CENV": reg_beginning["UNIVERSAL"] + reg_ending["CENV"],
+    "CJA": reg_beginning["UNIVERSAL"] + reg_ending["CJA"],
+
 }
 
 
