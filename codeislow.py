@@ -323,6 +323,7 @@ def do_upload():
 
     yield "<!DOCTYPE html>"
     yield "<head>"
+    yield """<title> Code is low - Analyse en cours </title>"""
     yield """<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">"""
     yield """</head>"""
     yield """<body>"""
