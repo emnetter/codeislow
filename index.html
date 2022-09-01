@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang=fr>
 <head>
+    <title> Code is low - analyse de textes juridiques</title>
     <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css"> 
 </head>
 <body>
@@ -21,8 +22,9 @@
     <label>Alerter en cas de variation des textes sur une période de </label>
     <input type="number" name="user_future" value="3" min="0" max="99" size="2"> an(s) vers l'avenir
 <br>
+<!--
 <br>
-    <label> Mot de passe : </label> <input type="password" name="password"/>
+    <label> Mot de passe : </label> <input type="password" name="password"/> -->
 <br>
 <p><strong> En cliquant sur "soumettre", vous reconnaissez avoir pris connaissance des conditions d'utilisation et de la politique de confidentialité ci-dessous. </strong></p>
     <input type="submit" value="Soumettre" />
@@ -45,9 +47,10 @@
 	   <li> Si le texte a été <strong>récemment modifié</strong> (période définie par vous) (N.B. : seule la modification la plus récente est mentionnée) </li>
 	   <li> Si le texte va être <strong>modifié prochainement </strong> (période définie par vous) N.B. : seule la version à venir la plus proche est mentionnée)</li>
     </ul>
-    </div>
+
+    <p> La <a href="https://github.com/emnetter/codeislow" rel="noopener" target="_blank">page du dépôt</a> sur Github contient un fichier readme plus détaillé. 
 <br>
-<br>
+</div>
     
 <button onclick="accordion('terms')" class="w3-btn w3-block w3-blue-grey w3-left-align w3-hover-black">
     <h4> Conditions d'utilisation </h4>
@@ -68,7 +71,7 @@
 
     <p>Conformément <a href="https://github.com/emnetter/codeislow" target="_blank" rel="noopener">au code source public</a>, votre document est copié dans un fichier provisoire uniquement le temps d'être traité, puis supprimé (ligne "os.remove") avant même l'affichage des résultats. Au cas où la suppression échouerait en raison d'un bug, les fichiers sont automatiquement détruits par Heroku toutes les 24h, et le développeur s'engage à ne pas en prendre connaissance. Si vous souhaitez cependant qu'il examine votre document afin de comprendre pourquoi un examen a échoué, vous pouvez choisir de lui adresser, à l'adresse email située en haut de page. Il s'engage alors à ne l'exploiter à aucune autre fin puis à la détruire. L'échange entre votre navigateur et le serveur doit être chiffré. Si votre navigateur présente un cadenas ouvert ou indique que la connexion n'est pas sécurisée, il s'agit d'un dysfonctionnement et l'outil ne devrait pas être utilisé.</p>
     
-    <p>Il est également possible de préférer à cette application web une exécution locale du <a href="https://github.com/emnetter/codeislow">code source</a> sur votre propre système informatique. C'est le mode vivement recommandé pour le cas où votre document contiendrait des données confidentielles, particulièrement sensibles, ou soumises au secret professionnel. Rapprochez-vous de la personne responsable de vos systèmes d'information. L'ouverture d'un <a href="https://developer.aife.economie.gouv.fr/">compte développeur PISTE</a> (rapide et gratuite) sera alors nécessaire. Des instructions d'aide à la mise en place pourront être proposées par la suite.</p>
+    <p>Il est également possible de préférer à cette application web une exécution locale du <a href="https://github.com/emnetter/codeislow">code source</a> sur votre propre système informatique. C'est le mode vivement recommandé pour le cas où votre document contiendrait des données confidentielles, particulièrement sensibles, ou soumises au secret professionnel. Rapprochez-vous de la personne responsable de vos systèmes d'information. L'ouverture d'un <a href="https://developer.aife.economie.gouv.fr/">compte développeur PISTE</a> (rapide et gratuite) sera alors nécessaire.</p>
     
     <p>Les droits qui vous sont reconnus par le RGPD et la LIL <a href="https://enetter.fr/la-personne/chapitre-1-lidentite-numerique/section-2-la-protection-de-lidentite-numerique/ii-la-gestion-personnalisee-accessible-aux-individus/b-en-aval-de-la-collecte-des-donnees/">vous sont présentés</a> par l'auteur sur son site de chercheur en droit.</p>
     
@@ -90,7 +93,9 @@
 	   <li> Code de commerce [C. com.] </li>
 	   <li> Code de la consommation [C. conso.] </li>
 	   <li> Code de l'entrée et du séjour des étrangers et du droit d'asile [CESEDA] </li>
+        <li> Code de l'environnement [C. envir., CE]</li>
 	   <li> Code général des collectivités territoriales [CGCT] </li>
+        <li> Code de justice administrative [CJA]</li>
 	   <li> Code pénal [C. pén.] </li>
         <li> Code des postes et des communications électroniques [CPCE] </li>
 	   <li> Code de procédure civile [C. pr. civ., CPC]</li>

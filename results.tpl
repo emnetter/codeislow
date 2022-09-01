@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang=fr>
 <head>
+    <title> Code is low</title>
     <script> document.body.innerHTML = "" </script>
     <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
 </head>
