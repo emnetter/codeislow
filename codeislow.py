@@ -249,7 +249,7 @@ reg_ending = {
     "CESEDA": r"\s*(?:du Code de l'entrée et du séjour des étrangers et du droit d'asile|CESEDA|du CESEDA)",
     "CGCT": r"\s*(?:du Code général des collectivités territoriales|CGCT|du CGCT)",
     "CPCE": r"\s*(?:du Code des postes et des communications électroniques|CPCE|du CPCE)",
-    "CENV": r"\s*(?:du Code de l'environnement|C. envir.|CE |du CE )",
+    "CENV": r"\s*(?:du Code de l'environnement|C. envir.|C. env.)",
     "CJA": r"\s*(?:du Code de justice administrative|CJA|du CJA)",
 }
 
