@@ -51,7 +51,9 @@ def legifrance_auth():
 
 
 def spaces_remover(string):
-    return re.sub(" {2,}", " ", string)
+    without_spaces = re.sub(" {2,}", " ", string)
+    without_newlines = re.sub("\n", "", without_spaces)
+    return without_newlines
 
 
 # Ouverture du fichier utilisateur
