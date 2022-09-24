@@ -281,6 +281,11 @@ def root():
     return static_file("index.html", root=".")
 
 
+@app.route("/favicon.ico")
+def get_favicon():
+    return static_file('favicon.ico')
+
+
 # Actions à effectuer à l'upload du document de l'utilisateur
 @app.route("/upload", method="POST")
 def do_upload():
