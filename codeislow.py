@@ -2,6 +2,7 @@
 
 
 import datetime
+from importlib import reload
 import json
 import os
 import re
@@ -13,28 +14,30 @@ import docx
 import requests
 from PyPDF2 import PdfReader
 from bottle import Bottle
-from bottle import request, static_file, template
+from bottle import request, static_file, template, HTTPError, run
 from bottle_sslify import SSLify
 from dotenv import load_dotenv, find_dotenv
 from odf import text, teletype
 from odf.opendocument import load
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
+    
 
-load_dotenv(find_dotenv())
 
 app = Bottle()
 
 
-# Authentification sur Légifrance à l'aide de secrets conservés dans .env
 def legifrance_auth():
     '''Get auth token from SECRETS into dotenv'''
     token_url = "https://oauth.piste.gouv.fr/api/oauth/token"
 
+    load_dotenv()
+    client_id = os.environ.get("API_KEY")
+    client_secret = os.environ.get("API_SECRET")
     
-    client_id = os.environ.get("CLIENT_KEY")
-    client_secret = os.environ.get("CLIENT_SECRET")
-
+    if client_id is None or client_secret is None:
+        # return HTTPError(401, "No credential have been set")
+        raise Exception("No credential have been set")
     res = requests.post(
         token_url,
         data={
@@ -44,6 +47,12 @@ def legifrance_auth():
             "scope": "openid",
         },
     )
+    print(curlify.to_curl(res.request)) 
+    print(res.url)
+    # print(repr(res.status_code))
+    if res.status_code > 399:
+        # return HTTPError(res.status_code, "Unauthorized: invalid credentials")
+        raise Exception(f"HTTP Error code: {res.status_code}: Invalid credentials")
     response = res.json()
     token = response["access_token"]
     legifrance_headers = {
@@ -275,7 +284,7 @@ codes_regex = {
 
 }
 
-
+    
 # Affichage de la page web d'accueil
 @app.route("/")
 def root():
@@ -285,16 +294,18 @@ def root():
 # Actions à effectuer à l'upload du document de l'utilisateur
 @app.route("/upload", method="POST")
 def do_upload():
-    global headers
-    headers = legifrance_auth()
+    # global headers
 
-    load_dotenv(find_dotenv())
-    password = os.environ.get("PASSWORD")
+    # load_dotenv(find_dotenv())
+    # headers = legifrance_auth()
+
+    # password = os.environ.get("PASSWORD")
     # user_password = request.forms.get("password")
     # if user_password != password:
     #     yield "Mot de passe incorrect"
     #     sys.exit()
-
+    
+    # CODE RESULTS
     code_results = {}
     for code in main_codelist:
         code_results[code] = []
@@ -447,4 +458,4 @@ if os.environ.get("APP_LOCATION") == "heroku":
     SSLify(app)
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
 else:
-    app.run(host="localhost", port=8080, debug=True)
+    app.run(host="localhost", port=8080, debug=True, reloader=True)
