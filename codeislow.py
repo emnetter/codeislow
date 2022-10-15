@@ -21,14 +21,17 @@ from odf.opendocument import load
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
 
+load_dotenv(find_dotenv())
+
 app = Bottle()
 
 
 # Authentification sur Légifrance à l'aide de secrets conservés dans .env
 def legifrance_auth():
+    '''Get auth token from SECRETS into dotenv'''
     token_url = "https://oauth.piste.gouv.fr/api/oauth/token"
 
-    load_dotenv(find_dotenv())
+    
     client_id = os.environ.get("CLIENT_ID")
     client_secret = os.environ.get("CLIENT_SECRET")
 
