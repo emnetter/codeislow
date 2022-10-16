@@ -293,10 +293,6 @@ def validity_period(user_past=3, user_future=3):
                                datetime.datetime.now() + datetime.timedelta(days=float(user_future) * 365)
                        ).timestamp() * 1000
     return (past_reference, future_reference)
-# Affichage de la page web d'accueil
-@app.route("/")
-def root():
-    return static_file("index.html", root=".")
 
 def upload_document(upload="./tests/docs/newtest.docx"):
     # upload = request.files.get("upload")
@@ -316,6 +312,14 @@ def upload_document(upload="./tests/docs/newtest.docx"):
     if file_size > 2000000:
         raise Exception("Fichier trop lourd: la taille du fichier doit être < à 2Mo")
     return (doc_name, doc_ext, file_path)
+
+
+# Affichage de la page web d'accueil
+
+@app.route("/")
+def root():
+    return static_file("index.html", root=".")
+
 
 
 # Actions à effectuer à l'upload du document de l'utilisateur
@@ -345,17 +349,17 @@ def do_upload():
 
     # L'utilisateur upload son document, il est enregistré provisoirement
     doc_name, doc_ext, file_path = upload_document(request.files.get("upload"))
-    # yield "<!DOCTYPE html>"
-    # yield "<head>"
-    # yield """<title> Code is low</title>"""
-    # yield """<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">"""
-    # yield """</head>"""
-    # yield """<body>"""
-    # yield """<div class="w3-container w3-blue-grey">"""
-    # yield """<h1> Code is low</h1>"""
-    # yield """</div>"""
-    # yield "<h3> Analyse en cours. Veuillez patienter... </h3>"
-    # yield "<h4> Le fichier " + doc_name + doc_ext.upper() + " est actuellement parcouru. </h4>"
+    yield "<!DOCTYPE html>"
+    yield "<head>"
+    yield """<title> Code is low</title>"""
+    yield """<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">"""
+    yield """</head>"""
+    yield """<body>"""
+    yield """<div class="w3-container w3-blue-grey">"""
+    yield """<h1> Code is low</h1>"""
+    yield """</div>"""
+    yield "<h3> Analyse en cours. Veuillez patienter... </h3>"
+    yield "<h4> Le fichier " + doc_name + doc_ext.upper() + " est actuellement parcouru. </h4>"
 
     cleantext = yield from file_opener(doc_ext, file_path)
 
