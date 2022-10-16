@@ -26,11 +26,13 @@ CODE_DICT  = {
     "CESEDA": "(?P<CESEDA>du Code de l'entrée et du séjour des étrangers et du droit d'asile|CESEDA|du CESEDA)",
     "CGCT": "(?P<CGCT>du Code général des collectivités territoriales|CGCT|du CGCT)",
     "CPCE": "(?P<CPCE>du Code des postes et des communications électroniques|CPCE|du CPCE)",
-    "CENV": "(?P<CENV>du Code de l'environnement|C. envir.|CE |du CE )",
+    #Trop large CE
+    "CENV": "(?P<CENV>du Code de l'environnement|C. envir.|\sCE(\s|\.)|\sdu CE)",
     "CJA": "(?P<CJA>du Code de justice administrative|CJA|du CJA)",
 }
 
 CODE_REGEX = "|".join(CODE_DICT.values())
+# ARTICLE_ID = re.compile("?((L|R)?(\.))(\d+)?(-\d+)?(\s(al\.|alinea)\s\d+)")
 ARTICLE_P = f"{ARTICLE_REGEX}(?P<ref>.*?)({CODE_REGEX}$)"
 
 JURI_PATTERN = re.compile(ARTICLE_P, flags=re.I)
@@ -44,8 +46,9 @@ def parse_doc(file_path):
         
     full_text = []
     if doc_ext == "docx":
-        with open(file_path, "r") as f:
-            document = docx.Document(f.read())
+        
+        with open(file_path, "rb") as f:
+            document = docx.Document(f)
             paragraphs = document.paragraphs
             for i in range(len(paragraphs)):
                 full_text.append((paragraphs[i].text))
@@ -59,7 +62,7 @@ def parse_doc(file_path):
                 full_text.append((page.extract_text()))
         
     elif doc_ext == "odt":
-        with open(file_path, "r") as f:
+        with open(file_path, "rb") as f:
             document = load(f)
             paragraphs = document.getElementsByType(text.P)
             for i in range(len(paragraphs)):
@@ -67,18 +70,23 @@ def parse_doc(file_path):
     
     print(len(paragraphs), "paragraphs/pages")
     # print(full_text)
+    code_found = {}
     full_text = re.sub("\r|\n|\t", " ", "".join(full_text))
-    # paragraphs = [p for p in full_text.split("\n") if re.search(ARTICLE_REGEX, p) is not None and p.strip() != ""]
-    
-    # print(len(paragraphs))
-    # print(paragraphs)
-    print (full_text)
     for i, match in enumerate(re.finditer(JURI_PATTERN, full_text)):
         needle = match.groupdict()
         qualified_needle = {key: value for key, value in needle.items() if value is not None}
         print(i+1, qualified_needle)
+        ref = match.group("ref").strip()
+        refs = [n for n in re.split("(\set\s|,\s)", ref) if n not in [" et ", ", "]]
+        code = [k for k in qualified_needle.keys() if k not in ["ref", "art"]][0]
+        if code not in code_found:
+            code_found[code] = refs
+        else:
+            code_found[code].extend(refs)
+    return code_found
+
+        # print(ref)
         
-    
 if __name__== "__main__":
     test_path = "./tests/docs/"
     for f in os.listdir(test_path): 
@@ -87,6 +95,7 @@ if __name__== "__main__":
             print(file_abspath)
             # try:
             parse_doc(file_abspath)
+            break
             # except FileNotFoundError:
             #     print(f"{file_abspath} not found")
             #     pass
