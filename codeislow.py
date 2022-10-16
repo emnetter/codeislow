@@ -284,7 +284,17 @@ codes_regex = {
 
 }
 
-    
+def validity_period(user_past=3, user_future=3):
+    """Définition des bornes de la période déclenchant une alerte
+    si l'article a été modifié / va être modifié
+    """
+    past_reference = (
+                             datetime.datetime.now() - datetime.timedelta(days=float(user_past) * 365)
+                     ).timestamp() * 1000
+    future_reference = (
+                               datetime.datetime.now() + datetime.timedelta(days=float(user_future) * 365)
+                       ).timestamp() * 1000
+    return (past_reference, future_reference)
 # Affichage de la page web d'accueil
 @app.route("/")
 def root():
@@ -311,17 +321,10 @@ def do_upload():
         code_results[code] = []
 
     # L'utilisateur définit sur quelle période la validité de l'article est testée
-    user_past = request.forms.get("user_past")
-    user_future = request.forms.get("user_future")
-
-    # Définition des bornes de la période déclenchant une alerte
-    # si l'article a été modifié / va être modifié
-    past_reference = (
-                             datetime.datetime.now() - datetime.timedelta(days=float(user_past) * 365)
-                     ).timestamp() * 1000
-    future_reference = (
-                               datetime.datetime.now() + datetime.timedelta(days=float(user_future) * 365)
-                       ).timestamp() * 1000
+    # user_past = request.forms.get("user_past")
+    # user_future = request.forms.get("user_future")
+    user_past,user_future = validity_period(request.forms.get("user_past"), request.forms.get("user_future"))
+    
 
     # L'utilisateur upload son document, il est enregistré provisoirement
     upload = request.files.get("upload")
