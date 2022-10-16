@@ -23,6 +23,76 @@ from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
     
 
+ARTICLE_REGEX = re.compile(r"(^.*(?:article|art\.).*$)", flags=re.I | re.M)
+MAIN_CODELIST = {
+    "CCIV": "Code civil",
+    "CPRCIV": "Code de procédure civile",
+    "CCOM": "Code de commerce",
+    "CTRAV": "Code du travail",
+    "CPI": "Code de la propriété intellectuelle",
+    "CPEN": "Code pénal",
+    "CPP": "Code de procédure pénale",
+    "CASSUR": "Code des assurances",
+    "CCONSO": "Code de la consommation",
+    "CSI": "Code de la sécurité intérieure",
+    "CSP": "Code de la santé publique",
+    "CSS": "Code de la sécurité sociale",
+    "CESEDA": "Code de l'entrée et du séjour des étrangers et du droit d'asile",
+    "CGCT": "Code général des collectivités territoriales",
+    "CPCE": "Code des postes et des communications électroniques",
+    "CENV": "Code de l'environnement",
+    "CJA": "Code de justice administrative",
+}
+
+REG_BEGGINNING = {
+    "UNIVERSAL": r"((?:L\.?|R\.?|A\.?|D\.?)?\s*\d+-?\d*-?\d*),?\s*(?:alinéa|al\.)?\s*\d*\s?°?\s*"
+                 r"(?:,\s*((?:L\.?|R\.?|A\.?|D\.?)?\s*\d+-?\d*-?\d*),?\s*(?:alinéa|al\.)?\s*\d*\s?°?\s*"
+                 r"(?:,\s*((?:L\.?|R\.?|A\.?|D\.?)?\s*\d+-?\d*-?\d*),?\s*(?:alinéa|al\.)?\s*\d*\s?°?\s*"
+                 r"(?:,\s*((?:L\.?|R\.?|A\.?|D\.?)?\s*\d+-?\d*-?\d*),?\s*(?:alinéa|al\.)?\s*\d*\s?°?\s*)?)?)?"
+                 r"(?:et\s*((?:L\.?|R\.?|A\.?|D\.?)?\s*\d+-?\d*-?\d*),?\s*(?:alinéa|al\.)?\s*\d*\s?°?\s*)?"
+                 r"(?:et s\.|et suivants)?",
+}
+
+REG_ENDING = {
+    "CCIV": r"\s*(?:du Code civil|C\. civ\.)",
+    "CPRCIV": r"\s*(?:du Code de procédure civile|C\. pr\. civ\.|CPC|du CPC)",
+    "CCOM": r"\s*(?:du Code de commerce|C\. com\.)",
+    "CTRAV": r"\s*(?:du Code du travail|C\. trav\.)",
+    "CPI": r"\s*(?:du Code de la propriété intellectuelle|CPI|C\. pr\. int\.|du CPI)",
+    "CPEN": r"\s*(?:du Code pénal|C\. pén\.)",
+    "CPP": r"\s*(?:du Code de procédure pénale|du CPP|CPP)",
+    "CASSUR": r"\s*(?:du Code des assurances|C\. assur\.)",
+    "CCONSO": r"\s*(?:du Code de la consommation|C\. conso\.)",
+    "CSI": r"\s*(?:du Code de la sécurité intérieure|CSI|du CSI)",
+    "CSP": r"\s*(?:du Code de la santé publique|C\. sant\. pub\.|CSP|du CSP)",
+    "CSS": r"\s*(?:du Code de la sécurité sociale|C\. sec\. soc\.|CSS|du CSS)",
+    "CESEDA": r"\s*(?:du Code de l'entrée et du séjour des étrangers et du droit d'asile|CESEDA|du CESEDA)",
+    "CGCT": r"\s*(?:du Code général des collectivités territoriales|CGCT|du CGCT)",
+    "CPCE": r"\s*(?:du Code des postes et des communications électroniques|CPCE|du CPCE)",
+    "CENV": r"\s*(?:du Code de l'environnement|C. envir.|CE |du CE )",
+    "CJA": r"\s*(?:du Code de justice administrative|CJA|du CJA)",
+}
+
+CODES_REGEX = {
+    "CCIV": REG_BEGGINNING["UNIVERSAL"] + REG_ENDING["CCIV"],
+    "CPRCIV": REG_BEGGINNING["UNIVERSAL"] + REG_ENDING["CPRCIV"],
+    "CCOM": REG_BEGGINNING["UNIVERSAL"] + REG_ENDING["CCOM"],
+    "CTRAV": REG_BEGGINNING["UNIVERSAL"] + REG_ENDING["CTRAV"],
+    "CPI": REG_BEGGINNING["UNIVERSAL"] + REG_ENDING["CPI"],
+    "CPEN": REG_BEGGINNING["UNIVERSAL"] + REG_ENDING["CPEN"],
+    "CPP": REG_BEGGINNING["UNIVERSAL"] + REG_ENDING["CPP"],
+    "CASSUR": REG_BEGGINNING["UNIVERSAL"] + REG_ENDING["CASSUR"],
+    "CCONSO": REG_BEGGINNING["UNIVERSAL"] + REG_ENDING["CCONSO"],
+    "CSI": REG_BEGGINNING["UNIVERSAL"] + REG_ENDING["CSI"],
+    "CSP": REG_BEGGINNING["UNIVERSAL"] + REG_ENDING["CSP"],
+    "CSS": REG_BEGGINNING["UNIVERSAL"] + REG_ENDING["CSS"],
+    "CESEDA": REG_BEGGINNING["UNIVERSAL"] + REG_ENDING["CESEDA"],
+    "CGCT": REG_BEGGINNING["UNIVERSAL"] + REG_ENDING["CGCT"],
+    "CPCE": REG_BEGGINNING["UNIVERSAL"] + REG_ENDING["CPCE"],
+    "CENV": REG_BEGGINNING["UNIVERSAL"] + REG_ENDING["CENV"],
+    "CJA": REG_BEGGINNING["UNIVERSAL"] + REG_ENDING["CJA"],
+
+}
 
 app = Bottle()
 
@@ -47,9 +117,6 @@ def legifrance_auth():
             "scope": "openid",
         },
     )
-    print(curlify.to_curl(res.request)) 
-    print(res.url)
-    # print(repr(res.status_code))
     if res.status_code > 399:
         # return HTTPError(res.status_code, "Unauthorized: invalid credentials")
         raise Exception(f"HTTP Error code: {res.status_code}: Invalid credentials")
@@ -69,7 +136,7 @@ def spaces_remover(string):
 # Ouverture du fichier utilisateur
 # Indicateur de progression quand le fichier est suffisamment long
 def file_opener(ext, file_path):
-    article_detector = re.compile(r"(^.*(?:article|art\.).*$)", flags=re.I | re.M)
+    
     paragraphsdoc = []
     previous_progress = int
     f = open(file_path, "rb")
@@ -82,7 +149,7 @@ def file_opener(ext, file_path):
                     previous_progress = progress
                     yield str(progress) + " % ... "
             paragraph = document.paragraphs[i].text
-            if article_detector.search(paragraph) is not None:
+            if ARTICLE_REGEX.search(paragraph) is not None:
                 paragraphsdoc.append(paragraph)
     elif ext == ".odt":
         document = load(f)
@@ -94,7 +161,7 @@ def file_opener(ext, file_path):
                     previous_progress = progress
                     yield str(progress) + " % ... "
             paragraph = teletype.extractText(texts[i])
-            if article_detector.search(paragraph) is not None:
+            if ARTICLE_REGEX.search(paragraph) is not None:
                 paragraphsdoc.append(paragraph)
     elif ext == ".pdf":
         reader = PdfReader(file_path)
@@ -106,7 +173,7 @@ def file_opener(ext, file_path):
                     yield str(progress) + " % ... "
             page = reader.pages[i]
             page_text = (page.extract_text())
-            if article_detector.search(page_text) is not None:
+            if ARTICLE_REGEX.search(page_text) is not None:
                 paragraphsdoc.append(page_text)
     complete_text = spaces_remover(" ".join(paragraphsdoc))
     f.close()
@@ -115,7 +182,7 @@ def file_opener(ext, file_path):
 
 # Les paragraphes à tester sont confrontés à l'expression régulière de chaque code
 def code_detector(code_name, string):
-    detector = re.compile(codes_regex[code_name], re.I)
+    detector = re.compile(CODES_REGEX[code_name], re.I)
     detected = detector.findall(string)
     detected_list = list(sum(detected, ()))
     clean_list = []
@@ -214,75 +281,6 @@ def epoch_converter(epoch):
 # Initialisation du programme
 
 
-main_codelist = {
-    "CCIV": "Code civil",
-    "CPRCIV": "Code de procédure civile",
-    "CCOM": "Code de commerce",
-    "CTRAV": "Code du travail",
-    "CPI": "Code de la propriété intellectuelle",
-    "CPEN": "Code pénal",
-    "CPP": "Code de procédure pénale",
-    "CASSUR": "Code des assurances",
-    "CCONSO": "Code de la consommation",
-    "CSI": "Code de la sécurité intérieure",
-    "CSP": "Code de la santé publique",
-    "CSS": "Code de la sécurité sociale",
-    "CESEDA": "Code de l'entrée et du séjour des étrangers et du droit d'asile",
-    "CGCT": "Code général des collectivités territoriales",
-    "CPCE": "Code des postes et des communications électroniques",
-    "CENV": "Code de l'environnement",
-    "CJA": "Code de justice administrative",
-}
-
-reg_beginning = {
-    "UNIVERSAL": r"((?:L\.?|R\.?|A\.?|D\.?)?\s*\d+-?\d*-?\d*),?\s*(?:alinéa|al\.)?\s*\d*\s?°?\s*"
-                 r"(?:,\s*((?:L\.?|R\.?|A\.?|D\.?)?\s*\d+-?\d*-?\d*),?\s*(?:alinéa|al\.)?\s*\d*\s?°?\s*"
-                 r"(?:,\s*((?:L\.?|R\.?|A\.?|D\.?)?\s*\d+-?\d*-?\d*),?\s*(?:alinéa|al\.)?\s*\d*\s?°?\s*"
-                 r"(?:,\s*((?:L\.?|R\.?|A\.?|D\.?)?\s*\d+-?\d*-?\d*),?\s*(?:alinéa|al\.)?\s*\d*\s?°?\s*)?)?)?"
-                 r"(?:et\s*((?:L\.?|R\.?|A\.?|D\.?)?\s*\d+-?\d*-?\d*),?\s*(?:alinéa|al\.)?\s*\d*\s?°?\s*)?"
-                 r"(?:et s\.|et suivants)?",
-}
-
-reg_ending = {
-    "CCIV": r"\s*(?:du Code civil|C\. civ\.)",
-    "CPRCIV": r"\s*(?:du Code de procédure civile|C\. pr\. civ\.|CPC|du CPC)",
-    "CCOM": r"\s*(?:du Code de commerce|C\. com\.)",
-    "CTRAV": r"\s*(?:du Code du travail|C\. trav\.)",
-    "CPI": r"\s*(?:du Code de la propriété intellectuelle|CPI|C\. pr\. int\.|du CPI)",
-    "CPEN": r"\s*(?:du Code pénal|C\. pén\.)",
-    "CPP": r"\s*(?:du Code de procédure pénale|du CPP|CPP)",
-    "CASSUR": r"\s*(?:du Code des assurances|C\. assur\.)",
-    "CCONSO": r"\s*(?:du Code de la consommation|C\. conso\.)",
-    "CSI": r"\s*(?:du Code de la sécurité intérieure|CSI|du CSI)",
-    "CSP": r"\s*(?:du Code de la santé publique|C\. sant\. pub\.|CSP|du CSP)",
-    "CSS": r"\s*(?:du Code de la sécurité sociale|C\. sec\. soc\.|CSS|du CSS)",
-    "CESEDA": r"\s*(?:du Code de l'entrée et du séjour des étrangers et du droit d'asile|CESEDA|du CESEDA)",
-    "CGCT": r"\s*(?:du Code général des collectivités territoriales|CGCT|du CGCT)",
-    "CPCE": r"\s*(?:du Code des postes et des communications électroniques|CPCE|du CPCE)",
-    "CENV": r"\s*(?:du Code de l'environnement|C. envir.|CE |du CE )",
-    "CJA": r"\s*(?:du Code de justice administrative|CJA|du CJA)",
-}
-
-codes_regex = {
-    "CCIV": reg_beginning["UNIVERSAL"] + reg_ending["CCIV"],
-    "CPRCIV": reg_beginning["UNIVERSAL"] + reg_ending["CPRCIV"],
-    "CCOM": reg_beginning["UNIVERSAL"] + reg_ending["CCOM"],
-    "CTRAV": reg_beginning["UNIVERSAL"] + reg_ending["CTRAV"],
-    "CPI": reg_beginning["UNIVERSAL"] + reg_ending["CPI"],
-    "CPEN": reg_beginning["UNIVERSAL"] + reg_ending["CPEN"],
-    "CPP": reg_beginning["UNIVERSAL"] + reg_ending["CPP"],
-    "CASSUR": reg_beginning["UNIVERSAL"] + reg_ending["CASSUR"],
-    "CCONSO": reg_beginning["UNIVERSAL"] + reg_ending["CCONSO"],
-    "CSI": reg_beginning["UNIVERSAL"] + reg_ending["CSI"],
-    "CSP": reg_beginning["UNIVERSAL"] + reg_ending["CSP"],
-    "CSS": reg_beginning["UNIVERSAL"] + reg_ending["CSS"],
-    "CESEDA": reg_beginning["UNIVERSAL"] + reg_ending["CESEDA"],
-    "CGCT": reg_beginning["UNIVERSAL"] + reg_ending["CGCT"],
-    "CPCE": reg_beginning["UNIVERSAL"] + reg_ending["CPCE"],
-    "CENV": reg_beginning["UNIVERSAL"] + reg_ending["CENV"],
-    "CJA": reg_beginning["UNIVERSAL"] + reg_ending["CJA"],
-
-}
 
 def validity_period(user_past=3, user_future=3):
     """Définition des bornes de la période déclenchant une alerte
@@ -299,6 +297,25 @@ def validity_period(user_past=3, user_future=3):
 @app.route("/")
 def root():
     return static_file("index.html", root=".")
+
+def upload_document(upload="./tests/docs/newtest.docx"):
+    # upload = request.files.get("upload")
+    if upload is None:
+        raise Exception("Pas de fichier.")
+        
+    doc_name, doc_ext = os.path.splitext(upload.filename)
+    if doc_ext not in (".odt", ".docx", ".pdf"):
+        raise Exception("Extension incorrecte: les fichiers acceptés terminent par *.odt, *docx, *.pdf")
+        
+    save_path = Path.cwd() / Path("tmp")
+    if not os.path.exists(save_path):
+        os.makedirs(save_path)
+    file_path = "{path}/{file}".format(path=save_path, file=upload.filename)
+    upload.save(file_path, overwrite="true")
+    file_size = os.stat(file_path).st_size
+    if file_size > 2000000:
+        raise Exception("Fichier trop lourd: la taille du fichier doit être < à 2Mo")
+    return (doc_name, doc_ext, file_path)
 
 
 # Actions à effectuer à l'upload du document de l'utilisateur
@@ -317,7 +334,7 @@ def do_upload():
     
     # CODE RESULTS
     code_results = {}
-    for code in main_codelist:
+    for code in MAIN_CODELIST:
         code_results[code] = []
 
     # L'utilisateur définit sur quelle période la validité de l'article est testée
@@ -327,35 +344,18 @@ def do_upload():
     
 
     # L'utilisateur upload son document, il est enregistré provisoirement
-    upload = request.files.get("upload")
-    if upload is None:
-        yield "Pas de fichier"
-        sys.exit()
-    doc_name, doc_ext = os.path.splitext(upload.filename)
-    if doc_ext not in (".odt", ".docx", ".pdf"):
-        yield "Extension incorrecte"
-        sys.exit()
-    save_path = Path.cwd() / Path("tmp")
-    if not os.path.exists(save_path):
-        os.makedirs(save_path)
-    file_path = "{path}/{file}".format(path=save_path, file=upload.filename)
-    upload.save(file_path, overwrite="true")
-    file_size = os.stat(file_path).st_size
-    if file_size > 2000000:
-        yield "ERREUR : fichier d'une taille supérieure à 2 Mo"
-        sys.exit()
-
-    yield "<!DOCTYPE html>"
-    yield "<head>"
-    yield """<title> Code is low</title>"""
-    yield """<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">"""
-    yield """</head>"""
-    yield """<body>"""
-    yield """<div class="w3-container w3-blue-grey">"""
-    yield """<h1> Code is low</h1>"""
-    yield """</div>"""
-    yield "<h3> Analyse en cours. Veuillez patienter... </h3>"
-    yield "<h4> Le fichier " + doc_name + doc_ext.upper() + " est actuellement parcouru. </h4>"
+    doc_name, doc_ext, file_path = upload_document(request.files.get("upload"))
+    # yield "<!DOCTYPE html>"
+    # yield "<head>"
+    # yield """<title> Code is low</title>"""
+    # yield """<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">"""
+    # yield """</head>"""
+    # yield """<body>"""
+    # yield """<div class="w3-container w3-blue-grey">"""
+    # yield """<h1> Code is low</h1>"""
+    # yield """</div>"""
+    # yield "<h3> Analyse en cours. Veuillez patienter... </h3>"
+    # yield "<h4> Le fichier " + doc_name + doc_ext.upper() + " est actuellement parcouru. </h4>"
 
     cleantext = yield from file_opener(doc_ext, file_path)
 
@@ -364,20 +364,20 @@ def do_upload():
 
     # Mise en œuvre des expressions régulières
     yield "<h4> Les différents codes de droit français sont recherchés. </h4>"
-    for code_name in main_codelist:
+    for code_name in MAIN_CODELIST:
         yield "<small> " + code_name + "...  </small>"
         code_results[code_name] = code_detector(code_name, cleantext)
 
-    for code_name in main_codelist:
+    for code_name in MAIN_CODELIST:
         if not code_results[code_name]:
             del code_results[code_name]
 
     # Récupération des caractéristiques de chaque article sur Légifrance
     for code_name in code_results:
-        yield "<h4> " + "La base Légifrance est interrogée : textes du " + main_codelist[code_name] + "... </h4>"
+        yield "<h4> " + "La base Légifrance est interrogée : textes du " + MAIN_CODELIST[code_name] + "... </h4>"
         for article in code_results[code_name]:
             yield "<small> " + "Article " + article["number"] + "...  </small>"
-            article_id = get_article_id(article["number"], main_codelist[code_name])
+            article_id = get_article_id(article["number"], MAIN_CODELIST[code_name])
             article.update({"id": article_id})
 
             if article["id"] is not None:
@@ -398,7 +398,7 @@ def do_upload():
         for article in code_results[code_name]:
             if article["id"] is None:
                 articles_not_found.append(
-                    "Article " + article["number"] + " du " + main_codelist[code_name] + " non trouvé"
+                    "Article " + article["number"] + " du " + MAIN_CODELIST[code_name] + " non trouvé"
                 )
             else:
                 article_hyperlink = """<a class="w3-text-blue" href="https://www.legifrance.gouv.fr/codes/article_lc/""" + \
@@ -407,14 +407,14 @@ def do_upload():
 
                 if article["start"] < past_reference and article["end"] > future_reference:
                     articles_without_event.append(
-                        "Article " + article_hyperlink + " du " + main_codelist[code_name]
+                        "Article " + article_hyperlink + " du " + MAIN_CODELIST[code_name]
                     )
                 if article["start"] > past_reference:
                     articles_recently_modified.append(
                         "L'article "
                         + article_hyperlink
                         + " du "
-                        + main_codelist[code_name]
+                        + MAIN_CODELIST[code_name]
                         + " a été modifié le "
                         + str(epoch_converter(article["start"]))
                     )
@@ -423,7 +423,7 @@ def do_upload():
                         "La version actuelle de l'article "
                         + article_hyperlink
                         + " du "
-                        + main_codelist[code_name]
+                        + MAIN_CODELIST[code_name]
                         + " n'est valable que jusqu'au "
                         + str(epoch_converter(article["end"]))
                     )
