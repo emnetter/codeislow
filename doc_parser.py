@@ -1,4 +1,6 @@
+#!/usr/bin/env python
 # coding: utf-8
+
 
 import os
 from pathlib import Path
@@ -85,12 +87,15 @@ def convert_date_str_to_epoch(date_str):
     return datetime.datetime(date_time.tuple[:4]).timestamp()  
 
 def validity_period(user_past=3, user_future=3):
-    """Définition des bornes de la période déclenchant une alerte
-    si l'article a été modifié / va être modifié
+    """Définition des bornes de la période en années
+    déclenchant une alerte si l'article a été modifié / va être modifié
+    timedelta between now (datetime) and year (integer) expressed in epoch
     """
+    #timedemat in year into epoch
     past_reference = (
         datetime.datetime.now() - relativedelta(years=int(user_past))
     ).timestamp()*1000
+    #year from now into epoch
     future_reference = (
         datetime.datetime.now() + relativedelta(years=int(user_future))
     ).timestamp()*1000
@@ -98,7 +103,7 @@ def validity_period(user_past=3, user_future=3):
 
 
 def check_upload(upload):
-    '''Téléverser le document et le valider'''
+    '''Vérification du téléversement'''
     if upload is None:
         raise Exception("Erreur: Aucun fichier proposé")
     # print(upload.filename)
@@ -165,7 +170,8 @@ def parse_doc(file_path):
             paragraphs = document.getElementsByType(text.P)
             paragraph_nb = len(paragraphs)
             for i in range(paragraph_nb):
-                print(f"Extracting and parsing document {i}/{paragraph_nb} ...")
+                loading_progress(i,paragraph_nb)
+                # print(f"Extracting and parsing document {i}/{paragraph_nb} ...")
                 full_text.append((teletype.extractText(paragraphs[i])))
 
     print("Parsing completed")
@@ -173,6 +179,13 @@ def parse_doc(file_path):
     # os.remove(file_path)
     return re.sub("\r|\n|\t", " ", "".join(full_text))
 
+def loading_progress(i, paragraph_nb):
+    '''si le document est long afficher une barre de progression'''
+    if len(paragraphs) > 10:
+        progress = round((i / paragraph_nb) * 100)
+        if progress % 10 == 0 and previous_progress != progress:
+            previous_progress = progress
+            yield str(progress) + " % ... "
 
 def match_code_and_article(full_text, past_reference, future_reference):
     """Match and extract code and article"""
@@ -406,24 +419,13 @@ def upload():
     return """<html><code></code></html>""".format(main(upload_doc, user_past, user_future))
 
 if __name__ == "__main__":
-    # test_path = "./tests/docs/"
-    f = "newtest.pdf"
-    # file_abspath = os.path.join(test_path, f)
-    main(f)
-    # for f in os.listdir(test_path):
-    #     file_abspath = os.path.join(test_path, f)
-    #     if os.path.isfile(file_abspath):
-    #         print(file_abspath)
-    #         # full_text = parse_doc(file_abspath)
-    #         # code_by_articles = match_code_and_article(full_text)
-    #         main(file_abspath)
-    #         break
-    # except FileNotFoundError:
-    #     print(f"{file_abspath} not found")
-    #     pass
-    # except Exception as e:
-    #     print(e)
-    #     pass
+    test_path = "./tests/docs/"
+    for f in os.listdir(test_path):
+        file_abspath = os.path.join(test_path, f)
+        if os.path.isfile(file_abspath):
+            print(file_abspath)
+            main(file_abspath)
+            break
     # retry_strategy = Retry(
     #     total=3,
     #     status_forcelist=[429, 500, 502, 503, 504],
