@@ -2,6 +2,8 @@
 # coding: utf-8
 
 
+from distutils.log import info
+from distutils.command.upload import upload
 import os
 from pathlib import Path
 import re
@@ -18,6 +20,9 @@ from odf.opendocument import load
 from bottle import Bottle
 from bottle import request, static_file, template, HTTPError, run
 from bottle_sslify import SSLify
+from jinja2 import Environment, FileSystemLoader
+environment = Environment(loader=FileSystemLoader("./"))
+
 
 from dotenv import load_dotenv, find_dotenv
 
@@ -106,29 +111,25 @@ def check_upload(upload):
     '''Vérification du téléversement'''
     if upload is None:
         raise Exception("Erreur: Aucun fichier proposé")
-    # print(upload.filename)
-    if "filename" in upload:
-        doc_name, doc_ext = upload.filename.split("/")[-1].split(".")
-        if not os.path.exists(save_path):
-            os.makedirs(save_path)
-        file_path = f"{save_path}/{filename}"
-        upload.save(file_path, overwrite="true")
-        file_size = os.stat(file_path).st_size
-        if file_size > 2000000:
-            raise Exception(
-                "Erreur: Fichier trop lourd: la taille du fichier doit être < à 2Mo"
-            )
-        save_path = Path.cwd() / Path("tmp")
-    else:
-        file_path = upload
-        doc_name, doc_ext = upload.split("/")[-1].split(".")
     
-    filename = ".".join([doc_name, doc_ext])
+    doc_name, doc_ext = str(upload.filename).split("/")[-1].split(".")
+    
     if doc_ext not in ACCEPTED_EXTENSIONS:
         raise Exception(
             "Erreur: Extension incorrecte: les fichiers acceptés terminent par *.odt, *docx, *.pdf"
         )
-    
+    filename = ".".join([doc_name, doc_ext])
+    save_path = Path.cwd() / Path("tmp")
+    if not os.path.exists(save_path):
+        os.makedirs(save_path)
+    file_path = f"{save_path}/{filename}"
+    upload.save(file_path, overwrite="true")
+    file_size = os.stat(file_path).st_size
+    if file_size > 2000000:
+        os.remove(file_path)
+        raise Exception(
+            "Erreur: Fichier trop lourd: la taille du fichier doit être < à 2Mo"
+        )
     return file_path
 
 
@@ -191,34 +192,31 @@ def match_code_and_article(full_text, past_reference, future_reference):
     """Match and extract code and article"""
     code_list = "".join([f"<li>{code_name}</li>" for code_name in SUPPORTED_CODES])
     info_msg = f"<ul>Les différents codes du droit Français supportés:{code_list}</ul>"
-    # print(info_msg)
+    
     code_found = {}
     for i, match in enumerate(re.finditer(JURI_PATTERN, full_text)):
         needle = match.groupdict()
         qualified_needle = {
             key: value for key, value in needle.items() if value is not None
         }
-        # print(i+1, qualified_needle)
         ref = match.group("ref").strip()
-        article_ids = [re.sub("(\s|\.\s|\.)", "", n) for n in re.split("(\set\s|,\s)", ref) if n not in [" et ", ", ", "alinea", "al", "C"]]
+        article_ids = [re.sub("(\s|\.\s|\.)", "", n) for n in re.split("(\set\s|,\s|al|alinea)", ref) if n not in [" et ", ", ", "alinea", "al", "C"]]
         code = [k for k in qualified_needle.keys() if k not in ["ref", "art"]][0]
-        if code not in code_found:
-            code_found[code] = [get_article(code, a, past_reference, future_reference) for a in article_ids]
+        code_name = MAIN_CODELIST[code]
+        if code_name not in code_found:
+            code_found[code_name] = [get_article(code, a, past_reference, future_reference) for a in article_ids]
         else:
-            code_found[code].extend([get_article(code, a, past_reference, future_reference) for a in article_ids])
-    for code, articles in code_found.items():
-        print(code, MAIN_CODELIST[code])
-        for article in articles:
-            print(article["number"], article["message"])
-
-    # articles_by_code = 
-    # for code_name, articles in articles_by_code.items():
-        # code_full_name = MAIN_CODELIST[code_name]
-        # list_articles = "".join(
-        #     [f"<li>Article: <code>{a}</code></li>" for a in articles]
-        # )
-        # print(f"<ul> Articles du {code_full_name}:{list_articles}</ul>")
-    return code_found
+            code_found[code_name].extend([get_article(code, a, past_reference, future_reference) for a in article_ids])
+    
+    # for code, articles in code_found.items():
+    #     code_full_name = MAIN_CODELIST[code]
+    #     print(f"<h3> Articles du {code_full_name} (<code>{code}</code>):</h3>")
+    #     list_articles = "".join(
+    #         [f"<li>Article: <code>{article["number"]}</code>: {article["message"]}</li>" for a in articles]
+    #     )
+    #     print(list_articles)
+        
+    return info_msg, code_found
 
 
 def get_legifrance_auth():
@@ -293,7 +291,7 @@ def get_article_uid(code_name, article_number, headers=headers):
     }
     response = session.post("/".join([API_ROOT_URL, "search"]),
         headers=headers,
-        json=data,
+        json=data
     )
     if response.status_code > 399:
         print(response)
@@ -391,14 +389,16 @@ def get_articles(articles_by_code, user_past, user_future):
 def main(upload_doc, user_past=3, user_future=3):
     document = check_upload(upload_doc)
     full_text = parse_doc(document)
-    articles_by_codes = match_code_and_article(full_text,user_past, user_future)
-    for code, articles in articles_by_codes.items():
-        print("#", code, MAIN_CODELIST[code])
-        for article in articles:
-            print("\t", article["number"], article["url"],  article["message"], article["status"])
+    articles_by_codes_and_status = match_code_and_article(full_text,user_past, user_future)
+    return articles_by_codes_and_status
+    # for code, articles in articles_by_codes.items():
+    #     print("#", code, MAIN_CODELIST[code])
+    #     for article in articles:
+    #         print("\t", article["number"], article["url"],  article["message"], article["status"])
     # results = get_articles(articles_by_codes, user_past, user_future)
     # print(results)
     # return results
+
 app = Bottle()
 
 
@@ -414,18 +414,22 @@ def upload():
         request.forms.get("user_past"), request.forms.get("user_future")
     )
     upload_doc = request.files.get("upload")
-    if upload_doc is None:
+    if upload_doc is None or upload_doc == "":
         raise Exception("Aucun fichier selectionné")
-    return """<html><code></code></html>""".format(main(upload_doc, user_past, user_future))
+    format_ref = request.forms.get("format-select")
+    print(format_ref)
+    info_msg, articles = main(upload_doc, user_past, user_future)
+    template = environment.get_template("articles.tpl")
+    return template.render(info_msg = info_msg, articles=articles)
 
 if __name__ == "__main__":
-    test_path = "./tests/docs/"
-    for f in os.listdir(test_path):
-        file_abspath = os.path.join(test_path, f)
-        if os.path.isfile(file_abspath):
-            print(file_abspath)
-            main(file_abspath)
-            break
+    # test_path = "./tests/docs/"
+    # for f in os.listdir(test_path):
+    #     file_abspath = os.path.join(test_path, f)
+    #     if os.path.isfile(file_abspath):
+    #         print(file_abspath)
+    #         main(file_abspath)
+    #         break
     # retry_strategy = Retry(
     #     total=3,
     #     status_forcelist=[429, 500, 502, 503, 504],
@@ -440,4 +444,4 @@ if __name__ == "__main__":
     #     SSLify(app)
     #     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
     # else:
-    # app.run(host="localhost", port=8080, debug=True, reloader=True)
+    app.run(host="localhost", port=8080, debug=True, reloader=True)
