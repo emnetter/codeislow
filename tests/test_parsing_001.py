@@ -11,7 +11,6 @@ ACCEPTED_EXTENSIONS = ("odt", "pdf", "docx", "doc")
 
 def parse_doc(file_path):
     doc_name, doc_ext = file_path.split("/")[-1].split(".")
-    print(".".join([doc_name, doc_ext]))
     if doc_ext not in ACCEPTED_EXTENSIONS:
         raise Exception("Extension incorrecte: les fichiers acceptés terminent par *.odt, *docx, *.pdf")
         
@@ -59,6 +58,8 @@ class TestFileUpload:
         for file_path in file_paths:
             abspath = os.path.join(os.path.dirname(os.path.realpath(__file__)), file_path)
             nb_paragraph, full_text = parse_doc(abspath)
+            doc_name, doc_ext = abspath.split("/")[-1].split(".")
+            assert doc_name == newtest
             if abspath.endswith(".pdf"):
                 assert nb_paragraph == 1
             else:
