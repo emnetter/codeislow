@@ -48,7 +48,7 @@ def parse_doc(file_path):
     full_text = [n for n in full_text if n not in  ["\n", "", " "]]
     return full_text
     
-class TestFileUpload:
+class TestFileParsing:
     def test_wrong_extension(self):
         '''testing accepted extensions'''
         file_paths = ["document.rtf", "document.md", "document.xlsx"]
