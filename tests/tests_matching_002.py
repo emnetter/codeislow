@@ -4,7 +4,7 @@ from test_parsing_001 import parse_doc
 
 logging.basicConfig(filename='matching.log', encoding='utf-8', level=logging.DEBUG)
 
-ARTICLE_REGEX = "(?P<art>((A|a)rticles?|(A|a)rt\.))"
+ARTICLE_REGEX = r"(?P<art>((A|a)rticles?|(A|a)rt\.))"
 CODE_DICT  = {
     "CCIV": r"(?P<CCIV>du?\sCode civil|C\.\sciv\.|Code\sciv\.)",
     "CPRCIV": r"(?P<CPRCIV>du\sCode\sde\sprocédure civile|C\.\spr\.\sciv\.|CPC|du\sCPC)",
@@ -64,13 +64,13 @@ def match_code_and_articles(full_text, pattern_format="article_code"):
     """
     article_pattern = switch_pattern(pattern_format)
     code_found = {}
-    full_text = re.sub("\r|\n|\t", " ", "".join(full_text))
+    full_text = re.sub(r"\r|\n|\t", " ", "".join(full_text))
     for i, match in enumerate(re.finditer(article_pattern, full_text)):
         needle = match.groupdict()
         qualified_needle = {key: value for key, value in needle.items() if value is not None}
         print(i+1, qualified_needle)
         ref = match.group("ref").strip()
-        refs = [n for n in re.split("(\set\s|,\s)", ref) if n not in [" et ", ", "]]
+        refs = [n for n in re.split(r"(\set\s|,\s)", ref) if n not in [" et ", ", "]]
         code = [k for k in qualified_needle.keys() if k not in ["ref", "art"]][0]
         if code not in code_found:
             code_found[code] = refs
