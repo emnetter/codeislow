@@ -3,7 +3,7 @@ import re
 
 ARTICLE_REGEX = "(?P<art>((A|a)rticles?|(A|a)rt\.))"
 CODE_DICT  = {
-    "CCIV": "(?P<CCIV>du\sCode civil|C\.\sciv\.|civ\.)",
+    "CCIV": "(?P<CCIV>du?\sCode civil|C\.\sciv\.|Code\sciv\.)",
     "CPRCIV": "(?P<CPRCIV>du\sCode\sde\sprocédure civile|C\.\spr\.\sciv\.|CPC|du\sCPC)",
     "CCOM": "(?P<CCOM>du\nCode\sde\scommerce|C\.\scom\.)",
     "CTRAV": "(?P<CTRAV>du\sCode\sdu\stravail|C\.\strav\.)",
@@ -18,7 +18,7 @@ CODE_DICT  = {
     "CESEDA": "(?P<CESEDA>du\nCode\sde\sl'entrée\set\sdu\sséjour\sdes\sétrangers\set\sdu\sdroit\sd'asile|CESEDA|du\sCESEDA)",
     "CGCT": "(?P<CGCT>du\sCode\sgénéral\sdes\scollectivités\sterritoriales|CGCT|du CGCT)",
     "CPCE": "(?P<CPCE>du\sCode\sdes\spostes\set\sdes\scommunications\sélectroniques|CPCE|du\sCPCE)",
-    "CENV": "(?P<CENV>du\nCode\sde\sl'environnement|C. envir.|\sCE(\s|\.)|\sdu\sCE)",
+    "CENV": "(?P<CENV>du\nCode\sde\sl'environnement|C.\senvir.|\sCE(\s|\.)|\sdu\sCE)",
     "CJA": "(?P<CJA>du\nCode\sde\sjustice\sadministrative|CJA|du\sCJA)",
 }
 
