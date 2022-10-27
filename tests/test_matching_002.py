@@ -1,4 +1,5 @@
 import logging
+import os
 import re
 from test_parsing_001 import parse_doc
 
@@ -34,7 +35,7 @@ CODE_REGEX = "|".join(CODE_DICT.values())
 
 def switch_pattern(pattern="article_code"):
     """
-    Build pattern recognition
+    Build pattern recognition using pattern short code switch 
 
     Arguments:
         pattern: a string article_code or code_article 
@@ -43,9 +44,9 @@ def switch_pattern(pattern="article_code"):
         ValueError: pattern name is wrong
     """
 
-    if fmt not in ["article_code", "code_article"]:
+    if pattern not in ["article_code", "code_article"]:
         raise ValueError("Wrong pattern name: choose between 'article_code' or 'code_article'")
-    if fmt == "article_code":
+    if pattern == "article_code":
         return re.compile(f"{ARTICLE_REGEX}(?P<ref>.*?)({CODE_REGEX}$)", flags=re.I)
     else:
         return re.compile(f"({CODE_REGEX}){ARTICLE_REGEX}(?P<ref>.*?)$)", flags=re.I)
@@ -79,12 +80,13 @@ def match_code_and_articles(full_text, pattern_format="article_code"):
     return code_found
 
 
-    class TestMatching:
-        def test_full_text_normalization(self):
-            file_paths = ["newtest.doc", "newtest.docx", "newtest.pdf"]
-            for file_path in file_paths:
-                abspath = os.path.join(os.path.dirname(os.path.realpath(__file__)), file_path)
-                logging.debug(f'[LOAD] filename: {abspath}')
-                full_text = parse_doc(abspath)
-                logging.debug(f'[PARSE] filename: {abspath} - found {len(full_text)} sentences')
-                match_code_and_articles(full_text)
+class TestMatching:
+    def test_full_text_normalization(self):
+        file_paths = ["newtest.doc", "newtest.docx", "newtest.pdf"]
+        for file_path in file_paths:
+            abspath = os.path.join(os.path.dirname(os.path.realpath(__file__)), file_path)
+            # logging.debug(f'[LOAD] filename: {abspath}')
+            full_text = parse_doc(abspath)
+            # logging.debug(f'[PARSE] filename: {abspath} - found {len(full_text)} sentences')
+            results = match_code_and_articles(full_text)
+            assert len(results) == 21, results
