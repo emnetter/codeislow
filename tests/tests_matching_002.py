@@ -1,5 +1,8 @@
-
+import logging
 import re
+from test_parsing_001 import parse_doc
+
+logging.basicConfig(filename='matching.log', encoding='utf-8', level=logging.DEBUG)
 
 ARTICLE_REGEX = "(?P<art>((A|a)rticles?|(A|a)rt\.))"
 CODE_DICT  = {
@@ -23,22 +26,46 @@ CODE_DICT  = {
 }
 
 CODE_REGEX = "|".join(CODE_DICT.values())
+# ARTICLE_REF = re.compile("\d+")
 # ARTICLE_ID = re.compile("?((L|R)?(\.))(\d+)?(-\d+)?(\s(al\.|alinea)\s\d+)")
 
-JURI_PATTERN = re.compile(ARTICLE_P, flags=re.I)
+# JURI_PATTERN = re.compile(ARTICLE_P, flags=re.I)
 
 
-def switch_pattern(fmt="code_article"):
-    if fmt == "code_article":
-        return re.compile(f"{ARTICLE_REGEX}(?P<ref>.*?)({CODE_REGEX}$)")
+def switch_pattern(pattern="article_code"):
+    """
+    Build pattern recognition
+
+    Arguments:
+        pattern: a string article_code or code_article 
+
+    Raise:
+        ValueError: pattern name is wrong
+    """
+
+    if fmt not in ["article_code", "code_article"]:
+        raise ValueError("Wrong pattern name: choose between 'article_code' or 'code_article'")
+    if fmt == "article_code":
+        return re.compile(f"{ARTICLE_REGEX}(?P<ref>.*?)({CODE_REGEX}$)", flags=re.I)
     else:
-        return re.compile(f"({CODE_REGEX}){ARTICLE_REGEX}(?P<ref>.*?)$)")
+        return re.compile(f"({CODE_REGEX}){ARTICLE_REGEX}(?P<ref>.*?)$)", flags=re.I)
 
 
-def match_code_and_articles():
+def match_code_and_articles(full_text, pattern_format="article_code"):
+    """"
+    Detect law articles of supported codes 
+    
+    Arguments:
+        full_text: a string of the full document normalized
+        pattern_format: a string representing the pattern format article_code or code_article. Defaut to article_code
+
+    Returns:
+        results_dict: a dict compose of short version of code as key and list of the detected articles references  as values {code: [art_ref, art_ref2, ... ]}
+    """
+    article_pattern = switch_pattern(pattern_format)
     code_found = {}
     full_text = re.sub("\r|\n|\t", " ", "".join(full_text))
-    for i, match in enumerate(re.finditer(JURI_PATTERN, full_text)):
+    for i, match in enumerate(re.finditer(article_pattern, full_text)):
         needle = match.groupdict()
         qualified_needle = {key: value for key, value in needle.items() if value is not None}
         print(i+1, qualified_needle)
@@ -50,3 +77,14 @@ def match_code_and_articles():
         else:
             code_found[code].extend(refs)
     return code_found
+
+
+    class TestMatching:
+        def test_full_text_normalization(self):
+            file_paths = ["newtest.doc", "newtest.docx", "newtest.pdf"]
+            for file_path in file_paths:
+                abspath = os.path.join(os.path.dirname(os.path.realpath(__file__)), file_path)
+                logging.debug(f'[LOAD] filename: {abspath}')
+                full_text = parse_doc(abspath)
+                logging.debug(f'[PARSE] filename: {abspath} - found {len(full_text)} sentences')
+                match_code_and_articles(full_text)
