@@ -1,13 +1,15 @@
 import logging
 import os
 import re
+import pytest
+
 from test_parsing_001 import parse_doc
 
 logging.basicConfig(filename='matching.log', encoding='utf-8', level=logging.DEBUG)
 
 ARTICLE_REGEX = r"(?P<art>((A|a)rticles?|(A|a)rt\.))"
 CODE_DICT  = {
-    "CCIV": r"(?P<CCIV>du?\sCode civil|C\.\sciv\.|Code\sciv\.)",
+    "CCIV": r"(?P<CCIV>du?\sCode civil|C\.\sciv\.|Code\sciv\.|civ\.)",
     "CPRCIV": r"(?P<CPRCIV>du\sCode\sde\sprocédure civile|C\.\spr\.\sciv\.|CPC|du\sCPC)",
     "CCOM": r"(?P<CCOM>du\nCode\sde\scommerce|C\.\scom\.)",
     "CTRAV": r"(?P<CTRAV>du\sCode\sdu\stravail|C\.\strav\.)",
@@ -65,28 +67,65 @@ def match_code_and_articles(full_text, pattern_format="article_code"):
     """
     article_pattern = switch_pattern(pattern_format)
     code_found = {}
+    #normalisation
     full_text = re.sub(r"\r|\n|\t", " ", "".join(full_text))
     for i, match in enumerate(re.finditer(article_pattern, full_text)):
         needle = match.groupdict()
         qualified_needle = {key: value for key, value in needle.items() if value is not None}
-        print(i+1, qualified_needle)
+        counter = str(i+1)
+        # logging.DEBUG(f"[MATCHING] {counter}, {qualified_needle}")
         ref = match.group("ref").strip()
+        # split multiple articles of a same code
         refs = [n for n in re.split(r"(\set\s|,\s)", ref) if n not in [" et ", ", "]]
+        #get the code shortname based on regex group name <code>
         code = [k for k in qualified_needle.keys() if k not in ["ref", "art"]][0]
         if code not in code_found:
+            #append article references
             code_found[code] = refs
         else:
+            #append article references to existing list
             code_found[code].extend(refs)
+    
     return code_found
 
 
+
 class TestMatching:
-    def test_full_text_normalization(self):
+    def test_matching_code(self):
         file_paths = ["newtest.doc", "newtest.docx", "newtest.pdf"]
         for file_path in file_paths:
             abspath = os.path.join(os.path.dirname(os.path.realpath(__file__)), file_path)
-            # logging.debug(f'[LOAD] filename: {abspath}')
+            logging.debug(f'[LOAD] filename: {abspath}')
             full_text = parse_doc(abspath)
             # logging.debug(f'[PARSE] filename: {abspath} - found {len(full_text)} sentences')
             results = match_code_and_articles(full_text)
-            assert len(results) == 21, results
+            code_list = list(results.keys())
+            assert len(code_list) == 14, len(code_list)
+            assert sorted(code_list) == ['CASSUR', 'CCIV', 'CCOM', 'CCONSO', 'CENV', 'CGCT', 'CPEN', 'CPI', 'CPP', 'CPRCIV', 'CSI', 'CSP', 'CSS', 'CTRAV'], sorted(code_list)
+            
+    def test_matching_articles(self):
+        file_paths = ["newtest.doc", "newtest.docx", "newtest.pdf"]
+        for file_path in file_paths:
+            abspath = os.path.join(os.path.dirname(os.path.realpath(__file__)), file_path)
+            logging.debug(f'[LOAD] filename: {abspath}')
+            full_text = parse_doc(abspath)
+            # logging.debug(f'[PARSE] filename: {abspath} - found {len(full_text)} sentences')
+            results = match_code_and_articles(full_text)
+            articles_detected = [item for sublist in results.values() for item in sublist]
+            assert len(articles_detected) == 35, len(articles_detected)
+    
+    def test_matching_articles_references(self):
+        file_paths = ["newtest.doc", "newtest.docx", "newtest.pdf"]
+        for file_path in file_paths:
+            abspath = os.path.join(os.path.dirname(os.path.realpath(__file__)), file_path)
+            logging.debug(f'[LOAD] filename: {abspath}')
+            full_text = parse_doc(abspath)
+            # logging.debug(f'[PARSE] filename: {abspath} - found {len(full_text)} sentences')
+            results = match_code_and_articles(full_text)
+            for code_short in  list(results.keys()):
+                if code_short not in  ["CCIV", 'CPRCIV']:
+
+                    assert results[code_short] == [], (code_short, results[code_short])
+            # for CCIV remove remaining \s and transform into -
+            # assert results["CCIV"] == ['1120', '2288', '1240 al. 1', '1140.', '1', '349', '39999', '3-12', '12-4-6', '14', '15', '27'], results["CCIV"]
+            # assert results['CPRCIV'] == ['1038', '1289-2'], results['CPRCIV']
