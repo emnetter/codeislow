@@ -74,10 +74,13 @@ CODE_DICT = {
 
 CODE_REGEX = "|".join(CODE_DICT.values())
 ARTICLE_REGEX = "(?P<art>((A|a)rticles?|(A|a)rt\.))"
-ARTICLE_P = f"{ARTICLE_REGEX}\s(?P<ref>.*?)\s({CODE_REGEX}$)"
+
+ARTICLE_CODE = f"{ARTICLE_REGEX}\s(?P<ref>.*?)\s({CODE_REGEX}$)"
+CODE_ARTICLE = f"{CODE_REGEX}\s(?P<ref>.*?)\s({ARTICLE_REGEX}$)"
 REF_PATTERN = re.compile("^(?:L\.?|R\.?|A\.?|D\.?)?(?:\s*)(?:\d+)$")
 
-JURI_PATTERN = re.compile(ARTICLE_P, flags=re.I)
+ARTICLE_CODE = re.compile(ARTICLE_CODE, flags=re.I)
+CODE_ARTICLE = re.compile(CODE_ARTICLE, flags=re.I)
 ACCEPTED_EXTENSIONS = ("odt", "pdf", "docx", "doc")
 SUPPORTED_CODES = list(CODE_DICT.keys())
 
@@ -106,6 +109,19 @@ def validity_period(user_past=3, user_future=3):
     ).timestamp()*1000
     return (past_reference, future_reference)
 
+def session(func):
+    def wrapper():
+        retry_strategy = Retry(
+        total=3,
+        status_forcelist=[429, 500, 502, 503, 504],
+        allowed_methods=["HEAD", "GET", "POST", "OPTIONS"],
+        )
+        adapter = HTTPAdapter(max_retries=retry_strategy)
+        session = requests.Session()
+        session.mount("https://", adapter)
+        session.mount("http://", adapter)
+        func(session)
+    return wrapper
 
 def check_upload(upload):
     '''Vérification du téléversement'''
@@ -182,16 +198,21 @@ def parse_doc(file_path):
 
 def loading_progress(i, paragraph_nb):
     '''si le document est long afficher une barre de progression'''
-    if len(paragraphs) > 10:
+    if paragraph_nb > 10:
         progress = round((i / paragraph_nb) * 100)
         if progress % 10 == 0 and previous_progress != progress:
             previous_progress = progress
             yield str(progress) + " % ... "
 
-def match_code_and_article(full_text, past_reference, future_reference):
+def match_code_and_article(full_text, past_reference, future_reference, format_ref):
     """Match and extract code and article"""
-    code_list = "".join([f"<li>{code_name}</li>" for code_name in SUPPORTED_CODES])
-    info_msg = f"<ul>Les différents codes du droit Français supportés:{code_list}</ul>"
+    # pour etre sur que la liste manuelle est synchronisée
+    # code_list = "".join([f"<li>{code_name}</li>" for code_name in SUPPORTED_CODES])
+    # info_msg = f"<ul>Les différents codes du droit Français supportés:{code_list}</ul>"
+    if format_ref == "article-code":
+        JURI_PATTERN = ARTICLE_CODE
+    else:
+        JURI_PATTERN = CODE_ARTICLE
     
     code_found = {}
     for i, match in enumerate(re.finditer(JURI_PATTERN, full_text)):
@@ -200,23 +221,14 @@ def match_code_and_article(full_text, past_reference, future_reference):
             key: value for key, value in needle.items() if value is not None
         }
         ref = match.group("ref").strip()
-        article_ids = [re.sub("(\s|\.\s|\.)", "", n) for n in re.split("(\set\s|,\s|al|alinea)", ref) if n not in [" et ", ", ", "alinea", "al", "C"]]
+        article_ids = [re.sub("(\s|\.\s|\.)", "", n) for n in re.split("(\set\s|,\s)", ref) if n not in [" et ", ", ", "alinea", "al", "C"]]
         code = [k for k in qualified_needle.keys() if k not in ["ref", "art"]][0]
         code_name = MAIN_CODELIST[code]
         if code_name not in code_found:
             code_found[code_name] = [get_article(code, a, past_reference, future_reference) for a in article_ids]
         else:
             code_found[code_name].extend([get_article(code, a, past_reference, future_reference) for a in article_ids])
-    
-    # for code, articles in code_found.items():
-    #     code_full_name = MAIN_CODELIST[code]
-    #     print(f"<h3> Articles du {code_full_name} (<code>{code}</code>):</h3>")
-    #     list_articles = "".join(
-    #         [f"<li>Article: <code>{article["number"]}</code>: {article["message"]}</li>" for a in articles]
-    #     )
-    #     print(list_articles)
-        
-    return info_msg, code_found
+    return code_found
 
 
 def get_legifrance_auth():
@@ -232,21 +244,22 @@ def get_legifrance_auth():
     if client_id is None or client_secret is None:
         # return HTTPError(401, "No credential have been set")
         raise Exception("No credential have been set")
-
-    res = requests.post(
-        TOKEN_URL,
-        data={
-            "grant_type": "client_credentials",
-            "client_id": client_id,
-            "client_secret": client_secret,
-            "scope": "openid",
-        },
-    )
-    
-    if res.status_code in [400, 401]:
-        # return HTTPError(res.status_code, "Unauthorized: invalid credentials")
-        raise Exception(f"HTTP Error code: {res.status_code}: Invalid credentials")
-    token = res.json()
+    session = requests.Session()
+    with session as s:
+        res = s.post(
+            TOKEN_URL,
+            data={
+                "grant_type": "client_credentials",
+                "client_id": client_id,
+                "client_secret": client_secret,
+                "scope": "openid",
+            },
+        )
+        
+        if res.status_code in [400, 401]:
+            # return HTTPError(res.status_code, "Unauthorized: invalid credentials")
+            raise Exception(f"HTTP Error code: {res.status_code}: Invalid credentials")
+        token = res.json()
     access_token = token["access_token"]
     # token["expires_in"] = str(token["expires_in"])
     return {"Authorization": f"Bearer {access_token}"}
@@ -289,15 +302,16 @@ def get_article_uid(code_name, article_number, headers=headers):
         },
         "fond": "CODE_DATE"
     }
-    response = session.post("/".join([API_ROOT_URL, "search"]),
+    with session as s:
+        response = s.post("/".join([API_ROOT_URL, "search"]),
         headers=headers,
         json=data
-    )
-    if response.status_code > 399:
-        print(response)
-        return None
-    
-    article_informations = response.json()
+        )
+        if response.status_code > 399:
+            print(response)
+            return None
+        
+        article_informations = response.json()
     if not article_informations["results"]:
         return None
     
@@ -320,13 +334,15 @@ def get_article_content(article):
     see documentation at https://developer.aife.economie.gouv.fr/index.php?option=com_apiportal&view=apitester&usage=api&apitab=tests&apiName=L%C3%A9gifrance+Beta&apiId=426cf3c0-1c6d-46ba-a8b0-f79289086ed5&managerId=2&type=rest&apiVersion=1.6.2.5&Itemid=402&swaggerVersion=2.0&lang=fr
     """
     session = requests.Session()
-    response = session.post("/".join([API_ROOT_URL, "consult", "getArticle"]),
+    with session as s:
+        
+        response = s.post("/".join([API_ROOT_URL, "consult", "getArticle"]),
         headers = get_legifrance_auth(),
         json = article
     )
-    if response.status_code > 399:
-        return None
-    article_content = response.json()
+        if response.status_code > 399:
+            return None
+        article_content = response.json()
     return article_content["article"]
     
 
@@ -356,7 +372,7 @@ def get_article(
         article_content = get_article_content(article)
         if article_content is None:
             article["status"] = 404
-            article["message"] =  "Not found"
+            article["message"] =  "Indisponible"
             return article
         
         article["start"] = article_content["dateDebut"]
@@ -386,10 +402,10 @@ def get_articles(articles_by_code, user_past, user_future):
     return final_articles_by_code
 
 
-def main(upload_doc, user_past=3, user_future=3):
+def main(upload_doc, user_past=3, user_future=3, format_ref="article-code"):
     document = check_upload(upload_doc)
     full_text = parse_doc(document)
-    articles_by_codes_and_status = match_code_and_article(full_text,user_past, user_future)
+    articles_by_codes_and_status = match_code_and_article(full_text,user_past, user_future, format_ref)
     return articles_by_codes_and_status
     # for code, articles in articles_by_codes.items():
     #     print("#", code, MAIN_CODELIST[code])
@@ -409,18 +425,18 @@ def root():
 
 @app.route("/upload", method="POST")
 def upload():
-    """Quand l'utilisateur"""
+    """"""
     user_past, user_future = validity_period(
         request.forms.get("user_past"), request.forms.get("user_future")
     )
     upload_doc = request.files.get("upload")
-    if upload_doc is None or upload_doc == "":
-        raise Exception("Aucun fichier selectionné")
+    
     format_ref = request.forms.get("format-select")
-    print(format_ref)
-    info_msg, articles = main(upload_doc, user_past, user_future)
+    document = check_upload(upload_doc)
+    full_text = parse_doc(document)
+    articles = match_code_and_article(full_text,user_past, user_future, format_ref)
     template = environment.get_template("articles.tpl")
-    return template.render(info_msg = info_msg, articles=articles)
+    return template.render(articles=articles)
 
 if __name__ == "__main__":
     # test_path = "./tests/docs/"
@@ -430,16 +446,7 @@ if __name__ == "__main__":
     #         print(file_abspath)
     #         main(file_abspath)
     #         break
-    # retry_strategy = Retry(
-    #     total=3,
-    #     status_forcelist=[429, 500, 502, 503, 504],
-    #     allowed_methods=["HEAD", "GET", "POST", "OPTIONS"],
-    # )
-    # adapter = HTTPAdapter(max_retries=retry_strategy)
-    # session = requests.Session()
-    # session.mount("https://", adapter)
-    # session.mount("http://", adapter)
-
+    
     # if os.environ.get("APP_LOCATION") == "heroku":
     #     SSLify(app)
     #     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
