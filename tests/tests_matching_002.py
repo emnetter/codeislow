@@ -3,24 +3,23 @@ import re
 
 ARTICLE_REGEX = "(?P<art>((A|a)rticles?|(A|a)rt\.))"
 CODE_DICT  = {
-    "CCIV": "(?P<CCIV>du Code civil|C\.\sciv\.|civ\.)",
-    "CPRCIV": "(?P<CPRCIV>du Code de procédure civile|C\. pr\. civ\.|CPC|du CPC)",
-    "CCOM": "(?P<CCOM>du Code de commerce|C\. com\.)",
-    "CTRAV": "(?P<CTRAV>du Code du travail|C\. trav\.)",
-    "CPI": "(?P<CPI>du Code de la propriété intellectuelle|CPI|C\. pr\. int\.|du CPI)",
-    "CPEN": "(?P<CPEN>du Code pénal|C\. pén\.)",
-    "CPP": "(?P<CPP>du Code de procédure pénale|du CPP|CPP)",
-    "CASSU": "(?P<CASSUR>du Code des assurances|C\. assur\.)",
-    "CCONSO": "(?P<CCONSO>du Code de la consommation|C\. conso\.)",
-    "CSI": "(?P<CSI>du Code de la sécurité intérieure|CSI|du CSI)",
-    "CSP": "(?P<CSP>du Code de la santé publique|C\.\ssant\. pub\.|CSP|du CSP)",
-    "CSS": "(?P<CSS>du Code de la sécurité sociale|C\.\ssec\.\ssoc\.|CSS|du CSS)",
-    "CESEDA": "(?P<CESEDA>du Code de l'entrée et du séjour des étrangers et du droit d'asile|CESEDA|du CESEDA)",
-    "CGCT": "(?P<CGCT>du Code général des collectivités territoriales|CGCT|du CGCT)",
-    "CPCE": "(?P<CPCE>du Code des postes et des communications électroniques|CPCE|du CPCE)",
-    #Trop large CE
-    "CENV": "(?P<CENV>du Code de l'environnement|C. envir.|\sCE(\s|\.)|\sdu CE)",
-    "CJA": "(?P<CJA>du Code de justice administrative|CJA|du CJA)",
+    "CCIV": "(?P<CCIV>du\sCode civil|C\.\sciv\.|civ\.)",
+    "CPRCIV": "(?P<CPRCIV>du\sCode\sde\sprocédure civile|C\.\spr\.\sciv\.|CPC|du\sCPC)",
+    "CCOM": "(?P<CCOM>du\nCode\sde\scommerce|C\.\scom\.)",
+    "CTRAV": "(?P<CTRAV>du\sCode\sdu\stravail|C\.\strav\.)",
+    "CPI": "(?P<CPI>du\sCode\sde\sla\spropriété\sintellectuelle|CPI|C\.\spr\.\sint\.|du\sCPI)",
+    "CPEN": "(?P<CPEN>du\sCode\spénal|C\.\spén\.)",
+    "CPP": "(?P<CPP>du\sCode\sde\sprocédure\spénale|du CPP|CPP)",
+    "CASSU": "(?P<CASSUR>du\sCode\sdes\sassurances|C\.\sassur\.)",
+    "CCONSO": "(?P<CCONSO>du\sCode\sde\sla\sconsommation|C\.\sconso\.)",
+    "CSI": "(?P<CSI>du\sCode\sde\slasécurité intérieure|CSI|du CSI)",
+    "CSP": "(?P<CSP>du\sCode\sde\slasanté publique|C\.\ssant\.\spub\.|CSP|du CSP)",
+    "CSS": "(?P<CSS>du\sCode\sde\slasécurité sociale|C\.\ssec\.\ssoc\.|CSS|du CSS)",
+    "CESEDA": "(?P<CESEDA>du\nCode\sde\sl'entrée\set\sdu\sséjour\sdes\sétrangers\set\sdu\sdroit\sd'asile|CESEDA|du\sCESEDA)",
+    "CGCT": "(?P<CGCT>du\sCode\sgénéral\sdes\scollectivités\sterritoriales|CGCT|du CGCT)",
+    "CPCE": "(?P<CPCE>du\sCode\sdes\spostes\set\sdes\scommunications\sélectroniques|CPCE|du\sCPCE)",
+    "CENV": "(?P<CENV>du\nCode\sde\sl'environnement|C. envir.|\sCE(\s|\.)|\sdu\sCE)",
+    "CJA": "(?P<CJA>du\nCode\sde\sjustice\sadministrative|CJA|du\sCJA)",
 }
 
 CODE_REGEX = "|".join(CODE_DICT.values())
