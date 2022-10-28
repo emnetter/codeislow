@@ -9,23 +9,23 @@ logging.basicConfig(filename='matching.log', encoding='utf-8', level=logging.DEB
 
 ARTICLE_REGEX = r"(?P<art>((A|a)rticles?|(A|a)rt\.))"
 CODE_DICT  = {
-    "CCIV": r"(?P<CCIV>du?\sCode civil|C\.\sciv\.|Code\sciv\.|civ\.)",
-    "CPRCIV": r"(?P<CPRCIV>du\sCode\sde\sprocédure civile|C\.\spr\.\sciv\.|CPC|du\sCPC)",
-    "CCOM": r"(?P<CCOM>du\nCode\sde\scommerce|C\.\scom\.)",
-    "CTRAV": r"(?P<CTRAV>du\sCode\sdu\stravail|C\.\strav\.)",
-    "CPI": r"(?P<CPI>du\sCode\sde\sla\spropriété\sintellectuelle|CPI|C\.\spr\.\sint\.|du\sCPI)",
-    "CPEN": r"(?P<CPEN>du\sCode\spénal|C\.\spén\.)",
-    "CPP": r"(?P<CPP>du\sCode\sde\sprocédure\spénale|du CPP|CPP)",
-    "CASSU": r"(?P<CASSUR>du\sCode\sdes\sassurances|C\.\sassur\.)",
-    "CCONSO": r"(?P<CCONSO>du\sCode\sde\sla\sconsommation|C\.\sconso\.)",
-    "CSI": r"(?P<CSI>du\sCode\sde\slasécurité intérieure|CSI|du CSI)",
-    "CSP": r"(?P<CSP>du\sCode\sde\slasanté publique|C\.\ssant\.\spub\.|CSP|du CSP)",
-    "CSS": r"(?P<CSS>du\sCode\sde\slasécurité sociale|C\.\ssec\.\ssoc\.|CSS|du CSS)",
-    "CESEDA": r"(?P<CESEDA>du\nCode\sde\sl'entrée\set\sdu\sséjour\sdes\sétrangers\set\sdu\sdroit\sd'asile|CESEDA|du\sCESEDA)",
-    "CGCT": r"(?P<CGCT>du\sCode\sgénéral\sdes\scollectivités\sterritoriales|CGCT|du CGCT)",
-    "CPCE": r"(?P<CPCE>du\sCode\sdes\spostes\set\sdes\scommunications\sélectroniques|CPCE|du\sCPCE)",
-    "CENV": r"(?P<CENV>du\nCode\sde\sl'environnement|C.\senvir.|\sCE(\s|\.)|\sdu\sCE)",
-    "CJA": r"(?P<CJA>du\nCode\sde\sjustice\sadministrative|CJA|du\sCJA)",
+    "CCIV": r"(?P<CCIV>Code civil|C\.\sciv\.|Code\sciv\.|civ\.)",
+    "CPRCIV": r"(?P<CPRCIV>Code\sde\sprocédure civile|C\.\spr\.\sciv\.|CPC)",
+    "CCOM": r"(?P<CCOM>Code\sde\scommerce|C\.\scom\.)",
+    "CTRAV": r"(?P<CTRAV>Code\sdu\stravail|C\.\strav\.)",
+    "CPI": r"(?P<CPI>Code\sde\sla\spropriété\sintellectuelle|CPI|C\.\spr\.\sint\.)",
+    "CPEN": r"(?P<CPEN>Code\spénal|C\.\spén\.)",
+    "CPP": r"(?P<CPP>Code\sde\sprocédure\spénale|CPP)",
+    "CASSU": r"(?P<CASSUR>Code\sdes\sassurances|C\.\sassur\.)",
+    "CCONSO": r"(?P<CCONSO>Code\sde\sla\sconsommation|C\.\sconso\.)",
+    "CSI": r"(?P<CSI>Code\sde\slasécurité intérieure|CSI)",
+    "CSP": r"(?P<CSP>Code\sde\slasanté publique|C\.\ssant\.\spub\.|CSP)",
+    "CSS": r"(?P<CSS>Code\sde\slasécurité sociale|C\.\ssec\.\ssoc\.|CSS)",
+    "CESEDA": r"(?P<CESEDA>Code\sde\sl'entrée\set\sdu\sséjour\sdes\sétrangers\set\sdu\sdroit\sd'asile|CESEDA)",
+    "CGCT": r"(?P<CGCT>Code\sgénéral\sdes\scollectivités\sterritoriales|CGCT)",
+    "CPCE": r"(?P<CPCE>Code\sdes\spostes\set\sdes\scommunications\sélectroniques|CPCE|du\sCPCE)",
+    "CENV": r"(?P<CENV>Code\sde\sl'environnement|C.\senvir.|\sCE(\.?\s|\.)|",
+    "CJA": r"(?P<CJA>Code\sde\sjustice\sadministrative|CJA)",
 }
 
 CODE_REGEX = "|".join(CODE_DICT.values())
@@ -123,7 +123,7 @@ class TestMatching:
             # logging.debug(f'[PARSE] filename: {abspath} - found {len(full_text)} sentences')
             results = match_code_and_articles(full_text)
             articles_detected = [item for sublist in results.values() for item in sublist]
-            assert len(articles_detected) == 35, len(articles_detected)
+            assert len(articles_detected) == 38, len(articles_detected)
     
     def test_matching_articles_references(self):
         file_paths = ["newtest.doc", "newtest.docx", "newtest.pdf"]
