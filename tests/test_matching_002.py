@@ -23,8 +23,8 @@ CODE_DICT  = {
     "CSS": r"(?P<CSS>Code\sde\slasécurité sociale|C\.\ssec\.\ssoc\.|CSS)",
     "CESEDA": r"(?P<CESEDA>Code\sde\sl'entrée\set\sdu\sséjour\sdes\sétrangers\set\sdu\sdroit\sd'asile|CESEDA)",
     "CGCT": r"(?P<CGCT>Code\sgénéral\sdes\scollectivités\sterritoriales|CGCT)",
-    "CPCE": r"(?P<CPCE>Code\sdes\spostes\set\sdes\scommunications\sélectroniques|CPCE|du\sCPCE)",
-    "CENV": r"(?P<CENV>Code\sde\sl'environnement|C.\senvir.|\sCE(\.?\s|\.)|",
+    "CPCE": r"(?P<CPCE>Code\sdes\spostes\set\sdes\scommunications\sélectroniques|CPCE)",
+    "CENV": r"(?P<CENV>Code\sde\sl'environnement|C.\senvir.|\sCE\.?\s\.?",
     "CJA": r"(?P<CJA>Code\sde\sjustice\sadministrative|CJA)",
 }
 
