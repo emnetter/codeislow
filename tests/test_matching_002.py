@@ -68,7 +68,7 @@ def match_code_and_articles(full_text, pattern_format="article_code"):
     article_pattern = switch_pattern(pattern_format)
     code_found = {}
     #normalisation
-    full_text = re.sub(r"\r|\n|\t", " ", "".join(full_text))
+    full_text = re.sub(r"\r|\n|\t|\xa0", " ", "".join(full_text))
     for i, match in enumerate(re.finditer(article_pattern, full_text)):
         needle = match.groupdict()
         qualified_needle = {key: value for key, value in needle.items() if value is not None}
@@ -122,10 +122,17 @@ class TestMatching:
             full_text = parse_doc(abspath)
             # logging.debug(f'[PARSE] filename: {abspath} - found {len(full_text)} sentences')
             results = match_code_and_articles(full_text)
-            for code_short in  list(results.keys()):
-                if code_short not in  ["CCIV", 'CPRCIV']:
-
-                    assert results[code_short] == [], (code_short, results[code_short])
-            # for CCIV remove remaining \s and transform into -
-            # assert results["CCIV"] == ['1120', '2288', '1240 al. 1', '1140.', '1', '349', '39999', '3-12', '12-4-6', '14', '15', '27'], results["CCIV"]
-            # assert results['CPRCIV'] == ['1038', '1289-2'], results['CPRCIV']
+            assert results["CCIV"] == ['1120', '2288', '1240 al. 1', '1140.', '1', '349', '39999', '3-12', '12-4-6', '14', '15', '27'], results["CCIV"]
+            assert results['CPRCIV'] == ['1038', '1289-2'], results['CPRCIV']
+            assert results['CASSUR'] == ['L. 385-2', 'R. 343-4', 'A421-13'], results['CASSUR']
+            assert results['CCOM'] == ['L. 611-2'], results['CCOM']
+            assert results['CTRAV'] == ['L. 1111-1'], results['CTRAV']
+            assert results['CPI'] ==  ['L. 112-1', 'L. 331-4'], results['CPI']
+            assert results['CPEN'] == ['131-4', '225-7-1'], results['CPEN']
+            assert results['CPP'] == ['694-4-1', 'R57-6-1'], results['CPP']
+            assert results['CCONSO'] == ['L. 121-14', 'R. 742-52'], results['CCONSO']
+            assert results['CSI']== ['L. 622-7', ' R. 314-7'], results['CSI']
+            assert results['CSS'] == ['L. 173-8'], results['CSS']
+            assert results['CSP'] == ['L. 1110-1'], results['CSP']
+            assert results['CENV'] == ['L. 753-1', '12'], results['CENV']
+            assert results['CGCT'] == ['L. 1424-71', 'L1'], results['CGCT']
