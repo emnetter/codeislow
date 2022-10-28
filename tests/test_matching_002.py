@@ -30,7 +30,8 @@ CODE_DICT  = {
 
 CODE_REGEX = "|".join(CODE_DICT.values())
 # ARTICLE_REF = re.compile("\d+")
-# ARTICLE_ID = re.compile("?((L|R)?(\.))(\d+)?(-\d+)?(\s(al\.|alinea)\s\d+)")
+# ARTICLE_ID = re.compile("?((L|R|A)?(\.))(\d+)?(-\d+)?(\s(al\.|alinea)\s\d+)")
+# ARTICLE_ID = re.compile("?((L|R|A)?(\.))(\d+*?)(\s)")
 
 # JURI_PATTERN = re.compile(ARTICLE_P, flags=re.I)
 
@@ -77,14 +78,24 @@ def match_code_and_articles(full_text, pattern_format="article_code"):
         ref = match.group("ref").strip()
         # split multiple articles of a same code
         refs = [n for n in re.split(r"(\set\s|,\s)", ref) if n not in [" et ", ", "]]
+        # normalize articles to remove dots, spaces, caret and 'alinea'
+        refs = ["-".join([r for r in re.split(r"\s|\.|-", ref) if r not in [" ", "", "al", "alinea","alinéa"]]) for ref in refs]
+        # remove caret separating article nb
+        normalized_refs = []
+        for ref in refs:
+            special_ref = ref.split("-", 1)
+            if special_ref[0] in ["L", "A", "R", "D"]:
+                normalized_refs.append("".join(special_ref))
+            else:
+                normalized_refs.append(ref)
         #get the code shortname based on regex group name <code>
         code = [k for k in qualified_needle.keys() if k not in ["ref", "art"]][0]
         if code not in code_found:
             #append article references
-            code_found[code] = refs
+            code_found[code] = normalized_refs
         else:
             #append article references to existing list
-            code_found[code].extend(refs)
+            code_found[code].extend(normalized_refs)
     
     return code_found
 
@@ -122,17 +133,17 @@ class TestMatching:
             full_text = parse_doc(abspath)
             # logging.debug(f'[PARSE] filename: {abspath} - found {len(full_text)} sentences')
             results = match_code_and_articles(full_text)
-            assert results["CCIV"] == ['1120', '2288', '1240 al. 1', '1140.', '1', '349', '39999', '3-12', '12-4-6', '14', '15', '27'], results["CCIV"]
+            assert results["CCIV"] == ['1120', '2288', '1240-1', '1140', '1', '349', '39999', '3-12', '12-4-6', '14', '15', '27'], results["CCIV"]
             assert results['CPRCIV'] == ['1038', '1289-2'], results['CPRCIV']
-            assert results['CASSUR'] == ['L. 385-2', 'R. 343-4', 'A421-13'], results['CASSUR']
-            assert results['CCOM'] == ['L. 611-2'], results['CCOM']
-            assert results['CTRAV'] == ['L. 1111-1'], results['CTRAV']
-            assert results['CPI'] ==  ['L. 112-1', 'L. 331-4'], results['CPI']
+            assert results['CASSUR'] == ['L385-2', 'R343-4', 'A421-13'], results['CASSUR']
+            assert results['CCOM'] == ['L611-2'], results['CCOM']
+            assert results['CTRAV'] == ['L1111-1'], results['CTRAV']
+            assert results['CPI'] ==  ['L112-1', 'L331-4'], results['CPI']
             assert results['CPEN'] == ['131-4', '225-7-1'], results['CPEN']
             assert results['CPP'] == ['694-4-1', 'R57-6-1'], results['CPP']
-            assert results['CCONSO'] == ['L. 121-14', 'R. 742-52'], results['CCONSO']
-            assert results['CSI']== ['L. 622-7', ' R. 314-7'], results['CSI']
-            assert results['CSS'] == ['L. 173-8'], results['CSS']
-            assert results['CSP'] == ['L. 1110-1'], results['CSP']
-            assert results['CENV'] == ['L. 753-1', '12'], results['CENV']
-            assert results['CGCT'] == ['L. 1424-71', 'L1'], results['CGCT']
+            assert results['CCONSO'] == ['L121-14', 'R742-52'], results['CCONSO']
+            assert results['CSI']== ['L622-7', 'R314-7'], results['CSI']
+            assert results['CSS'] == ['L173-8'], results['CSS']
+            assert results['CSP'] == ['L1110-1'], results['CSP']
+            assert results['CENV'] == ['L753-1', '12'], results['CENV']
+            assert results['CGCT'] == ['L1424-71', 'L1'], results['CGCT']
