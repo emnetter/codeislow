@@ -73,11 +73,10 @@ def match_code_and_articles(full_text, pattern_format="article_code"):
     for i, match in enumerate(re.finditer(article_pattern, full_text)):
         needle = match.groupdict()
         qualified_needle = {key: value for key, value in needle.items() if value is not None}
-        counter = str(i+1)
         # logging.DEBUG(f"[MATCHING] {counter}, {qualified_needle}")
         ref = match.group("ref").strip()
         # split multiple articles of a same code
-        refs = [n for n in re.split(r"(\set\s|,\s)", ref) if n not in [" et ", ", "]]
+        refs = [n for n in re.split(r"(\set\s|,\s|\sdu)", ref) if n not in [" et ", ", ", " du", " ", ""]]
         # normalize articles to remove dots, spaces, caret and 'alinea'
         refs = ["-".join([r for r in re.split(r"\s|\.|-", ref) if r not in [" ", "", "al", "alinea","alinéa"]]) for ref in refs]
         # remove caret separating article nb
@@ -90,6 +89,7 @@ def match_code_and_articles(full_text, pattern_format="article_code"):
                 normalized_refs.append(ref)
         #get the code shortname based on regex group name <code>
         code = [k for k in qualified_needle.keys() if k not in ["ref", "art"]][0]
+        print(code, match.group(code))
         if code not in code_found:
             #append article references
             code_found[code] = normalized_refs
@@ -111,8 +111,8 @@ class TestMatching:
             # logging.debug(f'[PARSE] filename: {abspath} - found {len(full_text)} sentences')
             results = match_code_and_articles(full_text)
             code_list = list(results.keys())
-            assert len(code_list) == 14, len(code_list)
-            assert sorted(code_list) == ['CASSUR', 'CCIV', 'CCOM', 'CCONSO', 'CENV', 'CGCT', 'CPEN', 'CPI', 'CPP', 'CPRCIV', 'CSI', 'CSP', 'CSS', 'CTRAV'], sorted(code_list)
+            assert len(code_list) == 15, len(code_list)
+            assert sorted(code_list) == ['CASSUR', 'CCIV', 'CCOM', 'CCONSO', 'CENV', 'CESEDA', 'CGCT', 'CJA', 'CPEN', 'CPI', 'CPP', 'CPRCIV', 'CSI', 'CSP', 'CSS', 'CTRAV'], sorted(code_list)
             
     def test_matching_articles(self):
         file_paths = ["newtest.doc", "newtest.docx", "newtest.pdf"]
