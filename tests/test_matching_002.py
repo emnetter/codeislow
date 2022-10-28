@@ -30,10 +30,7 @@ CODE_DICT  = {
 
 CODE_REGEX = "|".join(CODE_DICT.values())
 # ARTICLE_REF = re.compile("\d+")
-# ARTICLE_ID = re.compile("?((L|R|A)?(\.))(\d+)?(-\d+)?(\s(al\.|alinea)\s\d+)")
-# ARTICLE_ID = re.compile("?((L|R|A)?(\.))(\d+*?)(\s)")
-
-# JURI_PATTERN = re.compile(ARTICLE_P, flags=re.I)
+# ARTICLE_ID = re.compile("?((L|R|A|D)?(\.))(\d+)?(-\d+)?(\s(al\.|alinea)\s\d+)")
 
 
 def switch_pattern(pattern="article_code"):
@@ -43,6 +40,8 @@ def switch_pattern(pattern="article_code"):
     Arguments:
         pattern: a string article_code or code_article 
 
+    Returns:
+        regex_pattern: compiled regex pattern 
     Raise:
         ValueError: pattern name is wrong
     """
@@ -64,7 +63,7 @@ def match_code_and_articles(full_text, pattern_format="article_code"):
         pattern_format: a string representing the pattern format article_code or code_article. Defaut to article_code
 
     Returns:
-        results_dict: a dict compose of short version of code as key and list of the detected articles references  as values {code: [art_ref, art_ref2, ... ]}
+        code_found: a dict compose of short version of code as key and list of the detected articles references  as values {code: [art_ref, art_ref2, ... ]}
     """
     article_pattern = switch_pattern(pattern_format)
     code_found = {}
@@ -75,7 +74,7 @@ def match_code_and_articles(full_text, pattern_format="article_code"):
         needle = match.groupdict()
         qualified_needle = {key: value for key, value in needle.items() if value is not None}
         msg = f"#{i+1}\t{qualified_needle}"
-        print(msg)
+        logging.debug(msg)
         #get the code shortname based on regex group name <code>
         code = [k for k in qualified_needle.keys() if k not in ["ref", "art"]][0]
         
