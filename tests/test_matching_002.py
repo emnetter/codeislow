@@ -7,9 +7,9 @@ from test_parsing_001 import parse_doc
 
 logging.basicConfig(filename='matching.log', encoding='utf-8', level=logging.DEBUG)
 
-ARTICLE_REGEX = r"(?P<art>((A|a)rticles?|(A|a)rt\.))"
+ARTICLE_REGEX = r"(?P<art>(Articles?|Art\.))"
 CODE_DICT  = {
-    "CCIV": r"(?P<CCIV>Code civil|C\.\sciv\.|Code\sciv\.|civ\.)",
+    "CCIV": r"(?P<CCIV>Code civil|C\.\sciv\.|Code\sciv\.|C\.civ\.|civ\.|CCIV)",
     "CPRCIV": r"(?P<CPRCIV>Code\sde\sprocédure civile|C\.\spr\.\sciv\.|CPC)",
     "CCOM": r"(?P<CCOM>Code\sde\scommerce|C\.\scom\.)",
     "CTRAV": r"(?P<CTRAV>Code\sdu\stravail|C\.\strav\.)",
@@ -50,7 +50,7 @@ def switch_pattern(pattern="article_code"):
     if pattern not in ["article_code", "code_article"]:
         raise ValueError("Wrong pattern name: choose between 'article_code' or 'code_article'")
     if pattern == "article_code":
-        return re.compile(f"{ARTICLE_REGEX}(?P<ref>.*?)({CODE_REGEX}$)", flags=re.I)
+        return re.compile(f"{ARTICLE_REGEX}(?P<ref>.*?)({CODE_REGEX})", flags=re.I)
     else:
         return re.compile(f"({CODE_REGEX}){ARTICLE_REGEX}(?P<ref>.*?)$)", flags=re.I)
 
@@ -68,28 +68,36 @@ def match_code_and_articles(full_text, pattern_format="article_code"):
     """
     article_pattern = switch_pattern(pattern_format)
     code_found = {}
+    
     #normalisation
-    full_text = re.sub(r"\r|\n|\t|\xa0", " ", "".join(full_text))
+    full_text = re.sub(r"\r|\n|\t|\xa0", " ", " ".join(full_text))
     for i, match in enumerate(re.finditer(article_pattern, full_text)):
         needle = match.groupdict()
         qualified_needle = {key: value for key, value in needle.items() if value is not None}
-        # logging.DEBUG(f"[MATCHING] {counter}, {qualified_needle}")
+        msg = f"#{i+1}\t{qualified_needle}"
+        print(msg)
+        #get the code shortname based on regex group name <code>
+        code = [k for k in qualified_needle.keys() if k not in ["ref", "art"]][0]
+        
         ref = match.group("ref").strip()
         # split multiple articles of a same code
         refs = [n for n in re.split(r"(\set\s|,\s|\sdu)", ref) if n not in [" et ", ", ", " du", " ", ""]]
         # normalize articles to remove dots, spaces, caret and 'alinea'
         refs = ["-".join([r for r in re.split(r"\s|\.|-", ref) if r not in [" ", "", "al", "alinea","alinéa"]]) for ref in refs]
-        # remove caret separating article nb
+        # clean caracters for everything but numbers and (L|A|R|D) and caret
         normalized_refs = []
         for ref in refs:
+            #accepted caracters for article
+            ref = "".join([n for n in ref if (n.isdigit() or n in ["L", "A", "R", "D", "-"])])
+            if ref.endswith("-"):
+                ref = ref[:-1]
+            # remove caret separating article nb between first letter
             special_ref = ref.split("-", 1)
             if special_ref[0] in ["L", "A", "R", "D"]:
                 normalized_refs.append("".join(special_ref))
             else:
                 normalized_refs.append(ref)
-        #get the code shortname based on regex group name <code>
-        code = [k for k in qualified_needle.keys() if k not in ["ref", "art"]][0]
-        print(code, match.group(code))
+        
         if code not in code_found:
             #append article references
             code_found[code] = normalized_refs
@@ -111,7 +119,7 @@ class TestMatching:
             # logging.debug(f'[PARSE] filename: {abspath} - found {len(full_text)} sentences')
             results = match_code_and_articles(full_text)
             code_list = list(results.keys())
-            assert len(code_list) == 15, len(code_list)
+            assert len(code_list) == 16, len(code_list)
             assert sorted(code_list) == ['CASSUR', 'CCIV', 'CCOM', 'CCONSO', 'CENV', 'CESEDA', 'CGCT', 'CJA', 'CPEN', 'CPI', 'CPP', 'CPRCIV', 'CSI', 'CSP', 'CSS', 'CTRAV'], sorted(code_list)
             
     def test_matching_articles(self):
@@ -123,7 +131,7 @@ class TestMatching:
             # logging.debug(f'[PARSE] filename: {abspath} - found {len(full_text)} sentences')
             results = match_code_and_articles(full_text)
             articles_detected = [item for sublist in results.values() for item in sublist]
-            assert len(articles_detected) == 38, len(articles_detected)
+            assert len(articles_detected) == 37, len(articles_detected)
     
     def test_matching_articles_references(self):
         file_paths = ["newtest.doc", "newtest.docx", "newtest.pdf"]
@@ -145,5 +153,7 @@ class TestMatching:
             assert results['CSI']== ['L622-7', 'R314-7'], results['CSI']
             assert results['CSS'] == ['L173-8'], results['CSS']
             assert results['CSP'] == ['L1110-1'], results['CSP']
-            assert results['CENV'] == ['L753-1', '12'], results['CENV']
-            assert results['CGCT'] == ['L1424-71', 'L1'], results['CGCT']
+            assert results['CENV'] == ['L124-1'], ("CENV", results['CENV'])
+            assert results['CJA'] == ['L121-2'], ("CJA", results['CJA'])
+            assert results['CGCT'] == ['L1424-71', 'L1'], ("CGCT", results['CGCT'])
+            assert results['CESEDA'] == ['L753-1', '12'], ("CESEDA", results["CESEDA"])

@@ -21,6 +21,7 @@ def parse_doc(file_path):
         FileNotFoundError: File has not been found. File_path must be incorrect
     """
     doc_name, doc_ext = file_path.split("/")[-1].split(".")
+    print(file_path)
     if doc_ext not in ACCEPTED_EXTENSIONS:
         raise Exception("Extension incorrecte: les fichiers acceptés terminent par *.odt, *.docx, *.doc,  *.pdf")
         
