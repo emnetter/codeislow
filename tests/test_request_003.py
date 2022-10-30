@@ -1,3 +1,11 @@
+import requests
+import os
+from dotenv import load_dotenv 
+
+
+API_ROOT_URL = "https://sandbox-api.piste.gouv.fr/dila/legifrance-beta/lf-engine-app/"
+# API_ROOT_URL =  "https://api.piste.gouv.fr/dila/legifrance-beta/lf-engine-app/",
+
 def get_legifrance_auth(client_id, client_secret):
     """
     Get authorization token from LEGIFRANCE API
@@ -11,13 +19,12 @@ def get_legifrance_auth(client_id, client_secret):
 
     Raise:
         Exception: No credentials have been set. Client_id or client_secret is None
-        Exception: Invalid credentials. Request to auth server failed with 400 or 401 error
+        Exception: Invalid credentials. Request to authentication server failed with 400 or 401 error
     """
-    # TOKEN_URL = "https://sandbox-oauth.aife.economie.gouv.fr/api/oauth/token"
+    
     TOKEN_URL = "https://sandbox-oauth.piste.gouv.fr/api/oauth/token"
-    # load_dotenv()
-    # client_id = os.getenv("OAUTH_KEY_2")
-    # client_secret = os.getenv("OAUTH_SECRET_2")
+    # TOKEN_URL = "https://sandbox-oauth.aife.economie.gouv.fr/api/oauth/token"
+    
     if client_id is None or client_secret is None:
         # return HTTPError(401, "No credential have been set")
         raise Exception("No credential have been set")
@@ -40,7 +47,7 @@ def get_legifrance_auth(client_id, client_secret):
     access_token = token["access_token"]
     return {"Authorization": f"Bearer {access_token}"}
 
-def get_article_uid(code_name, article_number, headers=headers):
+def get_article_uid(code_name, article_number, headers):
     """
     GET the article uid given by [Legifrance API](https://developer.aife.economie.gouv.fr/index.php?option=com_apiportal&view=apitester&usage=api&apitab=tests&apiName=L%C3%A9gifrance+Beta&apiId=426cf3c0-1c6d-46ba-a8b0-f79289086ed5&managerId=2&type=rest&apiVersion=1.6.2.5&Itemid=402&swaggerVersion=2.0&lang=fr)
     
@@ -108,26 +115,73 @@ def get_article_uid(code_name, article_number, headers=headers):
     return article_uid
 
 
-def get_article_content(article):
+def get_article_content(article_id, headers):
     """
     GET article_content from LEGIFRANCE API using POST /consult/getArticle https://developer.aife.economie.gouv.fr/index.php?option=com_apiportal&view=apitester&usage=api&apitab=tests&apiName=L%C3%A9gifrance+Beta&apiId=426cf3c0-1c6d-46ba-a8b0-f79289086ed5&managerId=2&type=rest&apiVersion=1.6.2.5&Itemid=402&swaggerVersion=2.0&lang=fr
     
     Arguments:
-        article: json article with code_name, id, article_number 
+        article_id: article uid eg. LEGIARTI000006307920
     Returns: 
-        article_content
-
+        article_content: a dictionnary with the full content of article 
     Raise:
-         Exception 
+         Exception : response.status_code [400-500]
     """
+    data = {"id": article_id}
     session = requests.Session()
     with session as s:
         
         response = s.post("/".join([API_ROOT_URL, "consult", "getArticle"]),
         headers = get_legifrance_auth(),
-        json = article
+        json = data
     )
         if response.status_code > 399:
             return None
         article_content = response.json()
     return article_content["article"]
+
+def get_article_content_by_id_and_article_nb(article_id, article_num, headers):
+    """
+    Récupère un Article en fonction de son ID et Numéro article depuis API Legifrance GET /consult getArticleWithIdAndNum
+    Arguments:
+        article_id: article uid eg. LEGIARTI000006307920
+        article_num: numéro de l'article standardisé eg. "3-45"
+    Returns: 
+        article_content: a dictionnary with the full content of article 
+    Raise:
+         Exception : response.status_code [400-500]
+    """
+    
+    data = {
+        "id": article_id,
+        "num": article_num
+    }
+
+
+    session = requests.Session()
+    with session as s:
+        
+        response = s.post("/".join([API_ROOT_URL, "consult", "getArticleWithIdandNum"]),
+        headers = headers,
+        json = data
+    )
+        if response.status_code > 399:
+            return None
+        article_content = response.json()
+    return article_content["article"]
+
+
+class TestLegiFranceAPI:
+    def setup(self):
+        print("setup")
+        load_dotenv()
+        self.client_id = os.getenv("OAUTH_KEY_2")
+        self.client_secret = os.getenv("OAUTH_SECRET_2")
+        print(self.client_id)
+        
+    def test_token_requests(self):
+        # client_id = os.getenv("OAUTH_KEY_2")
+        # client_secret = os.getenv("OAUTH_SECRET_2")
+        json_response = get_legifrance_auth(self.client_id, self.client_secret)
+        assert "Authorization" in json_response
+        assert json_response["Authorization"].startswith("Bearer")
+
