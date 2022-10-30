@@ -115,12 +115,12 @@ def get_article_uid(code_name, article_number, headers):
         article_uid: Identifiant unique de l'article dans Legifrance or None
 
     """
-    if code_name.upper() in list(MAIN_CODELIST.keys()):
+    if code_name in list(MAIN_CODELIST.keys()):
         code_fullname = MAIN_CODELIST[code_name]
-    elif code_name.lower() in [n.lower() for n in list(MAIN_CODELIST.values())]:
+    elif code_name in list(MAIN_CODELIST.values()):
         code_fullname = code_name
     else:
-        raise ValueError(f"{code_name} not found in the supported Codes List")
+        raise ValueError(f"`{code_name}` not found in the supported Code List")
     session = requests.Session()
 
     today_epoch = int(time.time()) * 1000
