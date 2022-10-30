@@ -73,7 +73,7 @@ class TestFileParsing:
             doc_name, doc_ext = abspath.split("/")[-1].split(".")
             assert doc_name == "newtest"
             if abspath.endswith(".pdf"):
-                assert len(full_text) == 21, (len(full_text), abspath)
+                assert len(full_text) == 23, (len(full_text), abspath)
             else:
                 assert len(full_text) == 22, (len(full_text), abspath)
             assert any("art." in _x for _x in full_text) is True
