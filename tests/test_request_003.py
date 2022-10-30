@@ -1,5 +1,3 @@
-import code
-from multiprocessing.sharedctypes import Value
 import requests
 import os
 import time
