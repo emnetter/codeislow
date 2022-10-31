@@ -110,13 +110,16 @@ def get_article_uid(code_name, article_number, headers):
         article_number: Référence de l'article mentionné (version normalisée eg. L25-67)
 
     Returns:
+        article: un dictionnaire qui contient l'identifiant unique de l'article dans legifrance, le nom du code en version courte et en version longue
         article_uid: Identifiant unique de l'article dans Legifrance or None
 
     """
     if code_name in list(MAIN_CODELIST.keys()):
-        code_fullname = MAIN_CODELIST[code_name]
+        code_short = code_name
+        code_long = MAIN_CODELIST[code_name]
     elif code_name in list(MAIN_CODELIST.values()):
-        code_fullname = code_name
+        code_long = code_name
+        code_short = get_short_code_from_full_name(code_long)
     else:
         raise ValueError(f"`{code_name}` not found in the supported Code List")
     
@@ -139,7 +142,7 @@ def get_article_uid(code_name, article_number, headers):
                 }
             ],
             "filtres": [
-                {"facette": "NOM_CODE", "valeurs": [code_fullname]},
+                {"facette": "NOM_CODE", "valeurs": [code_long]},
                 {"facette": "DATE_VERSION", "singleDate": today_epoch},
             ],
             "pageNumber": 1,
@@ -172,6 +175,7 @@ def get_article_uid(code_name, article_number, headers):
             article_uid = results[0]["sections"][0]["extracts"][0]["id"]
         except IndexError:
             return None
+    article = {"id": article_uid, "code_name_short": code_short, "code_name_long": code_long}
     return article_uid
 
 
@@ -206,6 +210,7 @@ def get_article_content(article_id, headers):
         for k in ["id", "num", "texte", "etat", "dateDebut", "dateFin", "articleVersions"]:
             article[k] = raw_article[k]
         # FEATURE - integrer les différentes versions
+        print(raw_article.keys())
         article["nb_versions"] = len(article["articleVersions"])
 
         return article 
@@ -346,5 +351,5 @@ class TestGetArticleContent:
         assert article_content["url"] == f"https://www.legifrance.gouv.fr/codes/article_lc/{article_uid}", article_content["url"]
         assert type(article_content["dateDebut"]) == int
         assert type(article_content["dateFin"]) == int
-        assert article_content["nb_versions"] == 1, article_content["nb_versions"]
+        assert article_content["nb_versions"] >= 1, article_content["nb_versions"]
         
