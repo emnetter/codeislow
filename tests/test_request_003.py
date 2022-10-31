@@ -77,10 +77,12 @@ def get_legifrance_auth(client_id, client_secret):
 
     TOKEN_URL = "https://sandbox-oauth.piste.gouv.fr/api/oauth/token"
     # TOKEN_URL = "https://sandbox-oauth.aife.economie.gouv.fr/api/oauth/token"
-    
+
     if client_id is None or client_secret is None:
         # return HTTPError(401, "No credential have been set")
-        raise ValueError("No credential: client_id or/and client_secret are not set. \nPlease register your API at https://developer.aife.economie.gouv.fr/")
+        raise ValueError(
+            "No credential: client_id or/and client_secret are not set. \nPlease register your API at https://developer.aife.economie.gouv.fr/"
+        )
     session = requests.Session()
     with session as s:
         res = s.post(
@@ -122,7 +124,7 @@ def get_article_uid(code_name, article_number, headers):
         code_short = get_short_code_from_full_name(code_long)
     else:
         raise ValueError(f"`{code_name}` not found in the supported Code List")
-    
+
     session = requests.Session()
 
     today_epoch = int(time.time()) * 1000
@@ -175,7 +177,11 @@ def get_article_uid(code_name, article_number, headers):
             article_uid = results[0]["sections"][0]["extracts"][0]["id"]
         except IndexError:
             return None
-    article = {"id": article_uid, "code_name_short": code_short, "code_name_long": code_long}
+    article = {
+        "id": article_uid,
+        "code_name_short": code_short,
+        "code_name_long": code_long,
+    }
     return article_uid
 
 
@@ -199,21 +205,30 @@ def get_article_content(article_id, headers):
             headers=headers,
             json=data,
         )
-        
+
         if response.status_code > 399:
             raise Exception(f"Error {response.status_code}: {response.reason}")
         article_content = response.json()
     try:
         raw_article = article_content["article"]
-        # FEATURE récupérer tous les titres et sections d'un article 
-        article = {"url": f"https://www.legifrance.gouv.fr/codes/article_lc/{article_id}"}
-        for k in ["id", "num", "texte", "etat", "dateDebut", "dateFin", "articleVersions"]:
+        # FEATURE récupérer tous les titres et sections d'un article
+        article = {
+            "url": f"https://www.legifrance.gouv.fr/codes/article_lc/{article_id}"
+        }
+        for k in [
+            "id",
+            "num",
+            "texte",
+            "etat",
+            "dateDebut",
+            "dateFin",
+            "articleVersions",
+        ]:
             article[k] = raw_article[k]
         # FEATURE - integrer les différentes versions
-        print(raw_article.keys())
         article["nb_versions"] = len(article["articleVersions"])
 
-        return article 
+        return article
     except KeyError:
         return None
 
@@ -276,9 +291,10 @@ class TestOAuthLegiFranceAPI:
         client_secret = os.getenv("API_SECRET2")
         with pytest.raises(ValueError) as exc_info:
             json_response = get_legifrance_auth(client_id, client_secret)
-            assert str(exc_info.value) == "No credential: client_id or/and client_secret are not set. \nPlease register your API at https://developer.aife.economie.gouv.fr/", str(
-                exc_info.value
-            )
+            assert (
+                str(exc_info.value)
+                == "No credential: client_id or/and client_secret are not set. \nPlease register your API at https://developer.aife.economie.gouv.fr/"
+            ), str(exc_info.value)
 
 
 class TestGetArticleId:
@@ -289,12 +305,21 @@ class TestGetArticleId:
         headers = get_legifrance_auth(client_id, client_secret)
         article_uid = get_article_uid("CCIV", "1120", headers)
         assert article_uid == "LEGIARTI000032040861", article_uid
-    @pytest.mark.parametrize("input_expected", [("CCONSO","L121-14", 'LEGIARTI000032227262'), ("CCONSO","R742-52","LEGIARTI000032808914"), ("CSI","L622-7","LEGIARTI000043540586"), ("CSI","R314-7","LEGIARTI000037144520")])
+
+    @pytest.mark.parametrize(
+        "input_expected",
+        [
+            ("CCONSO", "L121-14", "LEGIARTI000032227262"),
+            ("CCONSO", "R742-52", "LEGIARTI000032808914"),
+            ("CSI", "L622-7", "LEGIARTI000043540586"),
+            ("CSI", "R314-7", "LEGIARTI000037144520"),
+        ],
+    )
     def test_get_article_uid(self, input_expected):
         load_dotenv()
         client_id = os.getenv("API_KEY")
         client_secret = os.getenv("API_SECRET")
-        code_name,art_num,expected = input_expected
+        code_name, art_num, expected = input_expected
         headers = get_legifrance_auth(client_id, client_secret)
         article_uid = get_article_uid(code_name, art_num, headers)
         assert expected == article_uid
@@ -312,35 +337,53 @@ class TestGetArticleId:
         client_id = os.getenv("API_KEY")
         client_secret = os.getenv("API_SECRET")
         headers = get_legifrance_auth(client_id, client_secret)
-        
+
         with pytest.raises(ValueError) as exc_info:
-            #Note: Le code est sensible à la casse. 
-            #FEATURE: faire une base de référence insensible à la casse
+            # Note: Le code est sensible à la casse.
+            # FEATURE: faire une base de référence insensible à la casse
             article_uid = get_article_uid("Code Civil", "1120", headers)
-            assert str(exc_info.value) == "", str(
-                exc_info.value
-            )
+            assert str(exc_info.value) == "", str(exc_info.value)
             assert article_uid == None, article_uid
 
+
 class TestGetArticleContent:
-    def test_get_article_full_content(self, input_id=("CCONSO","L121-14", 'LEGIARTI000032227262')):
+    def test_get_article_full_content(
+        self, input_id=("CCONSO", "L121-14", "LEGIARTI000032227262")
+    ):
         load_dotenv()
         client_id = os.getenv("API_KEY")
         client_secret = os.getenv("API_SECRET")
         headers = get_legifrance_auth(client_id, client_secret)
         article_num, code, article_uid = input_id
         article_content = get_article_content(article_uid, headers)
-        assert article_content["url"] == "https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000032227262", article_content["url"]
-        assert article_content["dateDebut"] == 1467331200000, article_content["dateDebut"]
+        assert (
+            article_content["url"]
+            == "https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000032227262"
+        ), article_content["url"]
+        assert article_content["dateDebut"] == 1467331200000, article_content[
+            "dateDebut"
+        ]
         assert article_content["dateFin"] == 32472144000000, article_content["dateFin"]
         # assert article_content["nb_versions"] == 1, article_content["nb_versions"]
         assert article_content["articleVersions"][0] == {
-            'dateDebut': 1467331200000, 'dateFin': 32472144000000, 'etat': 'VIGUEUR', 'id': 'LEGIARTI000032227262',
-            'numero': None,'ordre': None,'version': '1.0'}, article_content["articleVersions"][0]
+            "dateDebut": 1467331200000,
+            "dateFin": 32472144000000,
+            "etat": "VIGUEUR",
+            "id": "LEGIARTI000032227262",
+            "numero": None,
+            "ordre": None,
+            "version": "1.0",
+        }, article_content["articleVersions"][0]
 
-    
-
-    @pytest.mark.parametrize("input_id", [("CCONSO","L121-14", 'LEGIARTI000032227262'), ("CCONSO","R742-52","LEGIARTI000032808914"), ("CSI","L622-7","LEGIARTI000043540586"), ("CSI","R314-7","LEGIARTI000037144520")])
+    @pytest.mark.parametrize(
+        "input_id",
+        [
+            ("CCONSO", "L121-14", "LEGIARTI000032227262"),
+            ("CCONSO", "R742-52", "LEGIARTI000032808914"),
+            ("CSI", "L622-7", "LEGIARTI000043540586"),
+            ("CSI", "R314-7", "LEGIARTI000037144520"),
+        ],
+    )
     def test_get_article_content(self, input_id):
         load_dotenv()
         client_id = os.getenv("API_KEY")
@@ -348,8 +391,10 @@ class TestGetArticleContent:
         headers = get_legifrance_auth(client_id, client_secret)
         article_num, code, article_uid = input_id
         article_content = get_article_content(article_uid, headers)
-        assert article_content["url"] == f"https://www.legifrance.gouv.fr/codes/article_lc/{article_uid}", article_content["url"]
+        assert (
+            article_content["url"]
+            == f"https://www.legifrance.gouv.fr/codes/article_lc/{article_uid}"
+        ), article_content["url"]
         assert type(article_content["dateDebut"]) == int
         assert type(article_content["dateFin"]) == int
         assert article_content["nb_versions"] >= 1, article_content["nb_versions"]
-        
