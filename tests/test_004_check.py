@@ -73,36 +73,6 @@ def time_delta(operator, year_nb):
 def time_delta_to_epoch(operator, year_nb):
     return convert_datetime_to_epoch(time_delta(operator, year_nb))
 
-
-# def time_range_year(year_nb=3):
-#     '''
-#     Generate a time range given year_nb from today
-
-#     Arguments:
-#         year_nb: integer representing year
-#     Returns:
-#         time_range: (past, today, future)
-#     '''
-#     today = datetime.date.today()
-#     future = today.replace(year=today.year+year_nb)
-#     past = today.replace(year=today.year-year_nb)
-#     return (past, today, future)
-
-# def time_range_month(month_nb=3):
-#     '''
-#     Generate a time range given month_nb from today
-
-#     Arguments:
-#         month_nb: integer representing month
-#     Returns:
-#         time_range: (past, today, future)
-#     '''
-#     today = datetime.date.today()
-#     future = today.replace(month=today.month+month_nb)
-#     past = today.replace(year=today.month-month_nb)
-#     return (past, today, future)
-
-
 def get_validity_status(start, end, year_before, year_after):
     """
     Verifier la validité de l'article à partir d'une plage de temps
@@ -126,29 +96,7 @@ def get_validity_status(start, end, year_before, year_after):
         return (204, "Pas de modification")
 
 
-# def check_validity(years_before, years_after, dateDebut, dateFin):
-#     """
-#     Controler le status de l'article: pas de modifications, prochaine mise à jour prochaine, modifié le
-
-#     Arguments:
-#         year_before: int representant le nombre d'année avant
-#         year_après: int representant le nombre d'année après
-#         dateDebut: int représentant la date de création de l'article au standard epoch
-#         dateFin: int représentant la date d'expiration de l'article au standard epoch
-#     Return:
-#         status: "Pas de modification", "Modifié le", "Valable jusqu'au"
-#         status_code: 204, 301, 302
-#     Raise:
-#         Exception(ConversionError) Erreur de conversion de epoch en date
-#     """
-#     status = "Pas de modification"
-#     status_code = 204
-
-
-#     return {"status": status, "status_code": status_code}
-
-
-def get_article(code_name, article_number, client_id, client_secret):
+def get_article(code_name, article_number, client_id, client_secret, past_year_nb=3, future_year_nb=3):
     """
     Accéder aux informations de status de l'article
 
@@ -166,7 +114,7 @@ def get_article(code_name, article_number, client_id, client_secret):
         "code_short_name": code_name,
         "number": article_number,
         "status_code": 200,
-        "status": "",
+        "status": "OK",
     }
     article_id = get_article_uid(
         code_name, article_number, headers=get_legifrance_auth(client_id, client_secret)
@@ -183,6 +131,11 @@ def get_article(code_name, article_number, client_id, client_secret):
     # convert epoch to datetime
     article["start_date"] = convert_epoch_to_datetime(article["dateDebut"])
     article["end_date"] = convert_epoch_to_datetime(article["dateFin"])
+    article["status_code"], article["status"] = get_validity_status(article["start_date"], article["end_date"], past_year_nb, future_year_nb)
+    article["date_debut"] = convert_datetime_to_str(article["start_date"])
+    article["date_fin"] = convert_datetime_to_str(article["end_date"])
+    # del article["dateDebut"]
+    # del article["dateFin"]
     return article
 
 
@@ -217,28 +170,28 @@ class TestGetArticle:
     @pytest.mark.parametrize(
         "input_expected",
         [
-            ("CCONSO", "L121-14", "LEGIARTI000032227262"),
-            ("CCONSO", "R742-52", "LEGIARTI000032808914"),
-            ("CSI", "L622-7", "LEGIARTI000043540586"),
-            ("CSI", "R314-7", "LEGIARTI000037144520"),
-            ("CGCT", "L1424-71", "LEGIARTI000028529379"),
-            ("CJA", "L121-2", "LEGIARTI000043632528"),
-            ("CESEDA", "L753-1", "LEGIARTI000042774802"),
-            ("CENV", "L124-1", "LEGIARTI000033140333"),
+            ("CCONSO", "L121-14", "LEGIARTI000032227262",204),
+            ("CCONSO", "R742-52", "LEGIARTI000032808914",204),
+            ("CSI", "L622-7", "LEGIARTI000043540586", 301),
+            ("CSI", "R314-7", "LEGIARTI000037144520",204),
+            ("CGCT", "L1424-71", "LEGIARTI000028529379", 204),
+            ("CJA", "L121-2", "LEGIARTI000043632528",301),
+            ("CESEDA", "L753-1", "LEGIARTI000042774802", 301),
+            ("CENV", "L124-1", "LEGIARTI000033140333", 204),
         ],
     )
     def test_get_multiple_articles(self, input_expected):
         load_dotenv()
         client_id = os.getenv("API_KEY")
         client_secret = os.getenv("API_SECRET")
-        code_short_name, art_num, art_id = input_expected
+        code_short_name, art_num, art_id, status_code = input_expected
         article = get_article(code_short_name, art_num, client_id, client_secret)
         assert article["id"] == art_id, (code_short_name, art_num, article["id"])
         assert article["code_short_name"] == code_short_name, article["code_short_name"]
         assert article["code_full_name"] == MAIN_CODELIST[code_short_name], article[
             "code_full_name"
         ]
-        assert article["status_code"] == 200
+        assert article["status_code"] == status_code, (status_code, code_short_name,art_num)
 
     @pytest.mark.parametrize(
         "input_expected",
@@ -309,7 +262,7 @@ class TestGetArticle:
             code_short_name,
             art_num,
         )
-
+    
     @pytest.mark.parametrize(
         "input_expected",
         [
