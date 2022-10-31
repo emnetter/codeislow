@@ -9,6 +9,7 @@ from odf.opendocument import load
 
 ACCEPTED_EXTENSIONS = ("odt", "pdf", "docx", "doc")
 
+
 def parse_doc(file_path):
     """
     Parsing document
@@ -23,17 +24,19 @@ def parse_doc(file_path):
     doc_name, doc_ext = file_path.split("/")[-1].split(".")
     print(file_path)
     if doc_ext not in ACCEPTED_EXTENSIONS:
-        raise Exception("Extension incorrecte: les fichiers acceptés terminent par *.odt, *.docx, *.doc,  *.pdf")
-        
+        raise Exception(
+            "Extension incorrecte: les fichiers acceptés terminent par *.odt, *.docx, *.doc,  *.pdf"
+        )
+
     full_text = []
     if doc_ext == "pdf":
-        with open(file_path, "rb") as f:    
+        with open(file_path, "rb") as f:
             reader = PdfReader(f)
-            
+
             for i in range(len(reader.pages)):
                 page = reader.pages[i]
                 full_text.extend((page.extract_text()).split("\n"))
-            
+
     elif doc_ext == "odt":
         with open(file_path, "rb") as f:
             document = load(f)
@@ -47,28 +50,31 @@ def parse_doc(file_path):
             paragraphs = document.paragraphs
             for i in range(len(paragraphs)):
                 full_text.append((paragraphs[i].text))
-    full_text = [n for n in full_text if n not in  ["\n", "", " "]]
+    full_text = [n for n in full_text if n not in ["\n", "", " "]]
     return full_text
-    
+
+
 class TestFileParsing:
     def test_wrong_extension(self):
-        '''testing accepted extensions'''
+        """testing accepted extensions"""
         file_paths = ["document.rtf", "document.md", "document.xlsx"]
         with pytest.raises(Exception):
             for file_path in file_paths:
                 parse_doc(file_path)
 
     def test_wrong_file_path(self):
-        '''testing FileNotFound Error'''
+        """testing FileNotFound Error"""
         filepath = "./document.doc"
         with pytest.raises(FileNotFoundError):
             parse_doc(filepath)
 
     def test_content(self):
-        '''test content'''
+        """test content"""
         file_paths = ["newtest.doc", "newtest.docx", "newtest.pdf"]
         for file_path in file_paths:
-            abspath = os.path.join(os.path.dirname(os.path.realpath(__file__)), file_path)
+            abspath = os.path.join(
+                os.path.dirname(os.path.realpath(__file__)), file_path
+            )
             full_text = parse_doc(abspath)
             doc_name, doc_ext = abspath.split("/")[-1].split(".")
             assert doc_name == "newtest"
@@ -78,4 +84,3 @@ class TestFileParsing:
                 assert len(full_text) == 22, (len(full_text), abspath)
             assert any("art." in _x for _x in full_text) is True
             assert any("Art." in _x for _x in full_text) is True
-            
