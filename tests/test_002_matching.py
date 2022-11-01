@@ -4,8 +4,9 @@ import re
 import pytest
 
 from test_001_parsing import parse_doc
+from test_003_request import MAIN_CODELIST
 
-logging.basicConfig(filename="matching.log", encoding="utf-8", level=logging.DEBUG)
+# logging.basicConfig(filename="matching.log", encoding="utf-8", level=logging.DEBUG)
 
 ARTICLE_REGEX = r"(?P<art>(Articles?|Art\.))"
 CODE_DICT = {
@@ -78,7 +79,7 @@ def match_code_and_articles(full_text, pattern_format="article_code"):
             key: value for key, value in needle.items() if value is not None
         }
         msg = f"#{i+1}\t{qualified_needle}"
-        logging.debug(msg)
+        # logging.debug(msg)
         # get the code shortname based on regex group name <code>
         code = [k for k in qualified_needle.keys() if k not in ["ref", "art"]][0]
 
@@ -125,6 +126,69 @@ def match_code_and_articles(full_text, pattern_format="article_code"):
 
     return code_found
 
+def gen_matching_results(full_text, pattern_format="article_code"):
+    """ "
+    Detect law articles of supported codes
+
+    Arguments:
+        full_text: a string of the full document normalized
+        pattern_format: a string representing the pattern format article_code or code_article. Defaut to article_code
+
+    Yield:
+        code_short_name
+        code_long_name
+        article
+    """
+    article_pattern = switch_pattern(pattern_format)
+    code_found = {}
+
+    # normalisation
+    full_text = re.sub(r"\r|\n|\t|\xa0", " ", " ".join(full_text))
+    for i, match in enumerate(re.finditer(article_pattern, full_text)):
+        needle = match.groupdict()
+        qualified_needle = {
+            key: value for key, value in needle.items() if value is not None
+        }
+        msg = f"#{i+1}\t{qualified_needle}"
+        # logging.debug(msg)
+        # get the code shortname based on regex group name <code>
+        code = [k for k in qualified_needle.keys() if k not in ["ref", "art"]][0]
+
+        ref = match.group("ref").strip()
+        # split multiple articles of a same code
+        refs = [
+            n
+            for n in re.split(r"(\set\s|,\s|\sdu)", ref)
+            if n not in [" et ", ", ", " du", " ", ""]
+        ]
+        # normalize articles to remove dots, spaces, caret and 'alinea'
+        refs = [
+            "-".join(
+                [
+                    r
+                    for r in re.split(r"\s|\.|-", ref)
+                    if r not in [" ", "", "al", "alinea", "alinéa"]
+                ]
+            )
+            for ref in refs
+        ]
+        # clean caracters for everything but numbers and (L|A|R|D) and caret
+        normalized_refs = []
+        for ref in refs:
+            # accepted caracters for article
+            ref = "".join(
+                [n for n in ref if (n.isdigit() or n in ["L", "A", "R", "D", "-"])]
+            )
+            if ref.endswith("-"):
+                ref = ref[:-1]
+            # remove caret separating article nb between first letter
+            special_ref = ref.split("-", 1)
+            if special_ref[0] in ["L", "A", "R", "D"]:
+                # normalized_refs.append("".join(special_ref))
+                yield(code, MAIN_CODELIST[code], "".join(special_ref))
+            else:
+                # normalized_refs.append(ref)
+                yield(code, MAIN_CODELIST[code], ref)
 
 class TestMatching:
     def test_matching_code(self):
@@ -179,7 +243,7 @@ class TestMatching:
             abspath = os.path.join(
                 os.path.dirname(os.path.realpath(__file__)), file_path
             )
-            logging.debug(f"[LOAD] filename: {abspath}")
+            # logging.debug(f"[LOAD] filename: {abspath}")
             full_text = parse_doc(abspath)
             # logging.debug(f'[PARSE] filename: {abspath} - found {len(full_text)} sentences')
             results = match_code_and_articles(full_text)
@@ -214,3 +278,16 @@ class TestMatching:
             assert results["CJA"] == ["L121-2"], ("CJA", results["CJA"])
             assert results["CGCT"] == ["L1424-71", "L1"], ("CGCT", results["CGCT"])
             assert results["CESEDA"] == ["L753-1", "12"], ("CESEDA", results["CESEDA"])
+
+    def test_matching_generator(self):
+        file_paths = ["newtest.doc", "newtest.docx", "newtest.pdf"]
+        for file_path in file_paths:
+            abspath = os.path.join(
+                os.path.dirname(os.path.realpath(__file__)), file_path
+            )
+            # logging.debug(f"[LOAD] filename: {abspath}")
+            full_text = parse_doc(abspath)
+            # logging.debug(f'[PARSE] filename: {abspath} - found {len(full_text)} sentences')
+            for match in gen_matching_results(full_text):
+                assert len(match) == 3, match
+                assert match[1] == MAIN_CODELIST[match[0]]

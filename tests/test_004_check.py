@@ -13,6 +13,7 @@ from test_003_request import (
     get_legifrance_auth,
     get_article_uid,
     get_article_content,
+    get_short_code_from_full_name
 )
 
 
@@ -89,9 +90,9 @@ def get_validity_status(start, end, year_before, year_after):
     past_boundary = time_delta("-", year_before)
     future_boundary = time_delta("+", year_after)
     if start > past_boundary:
-        return (301, "Modifié le {}".format(convert_datetime_to_str(start)))
+        return (301, "Modifié le {}".format(convert_datetime_to_str(start).split(" ")[0]))
     if end < future_boundary:
-        return (302, "Valable jusqu'au {}".format(convert_datetime_to_str(end)))
+        return (302, "Valable jusqu'au {}".format(convert_datetime_to_str(end).split(" ")[0]))
     if start < past_boundary and end > future_boundary:
         return (204, "Pas de modification")
 
@@ -110,8 +111,8 @@ def get_article(code_name, article_number, client_id, client_secret, past_year_n
         ValueError(Code indisponible): Le nom du code est incorrect/ n'a pas été trouvé
     """
     article = {
-        "code_full_name": MAIN_CODELIST[code_name],
-        "code_short_name": code_name,
+        "code_full_name": code_name,
+        "code_short_name":get_short_code_from_full_name(code_name),
         "number": article_number,
         "status_code": 200,
         "status": "OK",

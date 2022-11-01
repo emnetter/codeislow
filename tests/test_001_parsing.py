@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 import pytest
 import os
 
@@ -22,9 +23,8 @@ def parse_doc(file_path):
         FileNotFoundError: File has not been found. File_path must be incorrect
     """
     doc_name, doc_ext = file_path.split("/")[-1].split(".")
-    print(file_path)
     if doc_ext not in ACCEPTED_EXTENSIONS:
-        raise Exception(
+        raise ValueError(
             "Extension incorrecte: les fichiers acceptés terminent par *.odt, *.docx, *.doc,  *.pdf"
         )
 
@@ -58,15 +58,17 @@ class TestFileParsing:
     def test_wrong_extension(self):
         """testing accepted extensions"""
         file_paths = ["document.rtf", "document.md", "document.xlsx"]
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError) as e:
             for file_path in file_paths:
                 parse_doc(file_path)
+                assert e == "Extension incorrecte: les fichiers acceptés terminent par *.odt, *.docx, *.doc,  *.pdf"
 
     def test_wrong_file_path(self):
         """testing FileNotFound Error"""
         filepath = "./document.doc"
-        with pytest.raises(FileNotFoundError):
+        with pytest.raises(FileNotFoundError) as e:
             parse_doc(filepath)
+            assert e == "", e
 
     def test_content(self):
         """test content"""
@@ -84,3 +86,4 @@ class TestFileParsing:
                 assert len(full_text) == 22, (len(full_text), abspath)
             assert any("art." in _x for _x in full_text) is True
             assert any("Art." in _x for _x in full_text) is True
+            assert any("Code" in _x for _x in full_text) is True
