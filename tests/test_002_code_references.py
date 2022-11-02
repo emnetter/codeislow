@@ -54,12 +54,12 @@ def get_long_and_short_code(code_name):
         Si le nom du code n'a pas été trouvé les valeurs sont nulles (None, None)
     '''
     
-    if code_name in MAIN_CODELIST.keys():
+    if code_name in CODE_REFERENCE.keys():
         short_code = code_name
-        long_code = MAIN_CODELIST[code_name]
-    elif code_name in MAIN_CODELIST.values():
+        long_code = CODE_REFERENCE[code_name]
+    elif code_name in CODE_REFERENCE.values():
         long_code = code_name
-        short_code_results = [k for k, v in MAIN_CODELIST.items() if v == code_name]
+        short_code_results = [k for k, v in CODE_REFERENCE.items() if v == code_name]
         if len(short_code_results) > 0:
             short_code = short_code_results[0]
         else: 
@@ -79,7 +79,7 @@ def get_code_full_name_from_short_code(short_code):
         full_name: long form of code eg. Code Civil
     """
     try:
-        return MAIN_CODELIST[short_code]
+        return CODE_REFERENCE[short_code]
     except ValueError:
         return None
 
@@ -93,7 +93,7 @@ def get_short_code_from_full_name(full_name):
     Returns:
         short_code: short form of Code eg. CCIV
     """
-    keys = [k for k, v in MAIN_CODELIST.items() if v == full_name]
+    keys = [k for k, v in CODE_REFERENCE.items() if v == full_name]
     if len(keys) > 0:
         return keys[0]
     else:

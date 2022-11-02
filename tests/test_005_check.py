@@ -8,13 +8,13 @@ import datetime
 from dateutil.relativedelta import relativedelta
 import pytest
 
-from test_003_request import (
+from test_004_request import (
     get_legifrance_auth,
     get_article_uid,
-    get_article_content,
-    
+    get_article_content
 )
 
+from test_002_code_references import get_code_full_name_from_short_code
 
 def convert_date_to_datetime(date):
     return datetime.datetime.fromordinal(date.toordinal())
@@ -96,7 +96,7 @@ def get_validity_status(start, end, year_before, year_after):
         return (204, "Pas de modification", "green")
 
 
-def get_article(long_code_name, article_number, client_id, client_secret, past_year_nb=3, future_year_nb=3):
+def get_article(short_code_name, article_number, client_id, client_secret, past_year_nb=3, future_year_nb=3):
     """
     Accéder aux informations simplifiée de l'article
 
@@ -107,33 +107,30 @@ def get_article(long_code_name, article_number, client_id, client_secret, past_y
         article: Un dictionnaire json avec code, article, status, status_code, color, url, text, id, start_date, end_date, date_debut, date_fin
     
     """
-    long_code_name, short_code_name = get_long_and_short_code(long_code_name)
+    
     article_tpl = {
-        "code": long_code_name,
+        "code": short_code_name,
+        "code_full_name": get_code_full_name_from_short_code(short_code_name),
         "article": article_number,
         "status_code": 200,
         "status": "OK",
         "color": "grey",
         "url": "",
         "texte": "",
-        "id": None
+        "id": get_article_uid(
+            short_code_name, article_number, headers=get_legifrance_auth(client_id, client_secret)
+        )
     }
-    article_id = get_article_uid(
-        long_code_name, article_number, headers=get_legifrance_auth(client_id, client_secret)
-    )
-    if article_id is None:
+    if article_tpl["id"] is None:
         article_tpl["color"] = "red"
         article_tpl["status_code"] = 404
         article_tpl["status"] = "Indisponible"
-        article_tpl["id"] = article_id
         return article_tpl
     article_content = get_article_content(
-        article_id, headers=get_legifrance_auth(client_id, client_secret)
+        article_tpl["id"], headers=get_legifrance_auth(client_id, client_secret)
     )
     article_tpl["texte"] = article_content["texte"]
     article_tpl["url"] = article_content["url"]
-    # article.update(article_content)
-    # convert epoch to datetime
     article_tpl["start_date"] = convert_epoch_to_datetime(article_content["dateDebut"])
     article_tpl["end_date"] = convert_epoch_to_datetime(article_content["dateFin"])
     article_tpl["status_code"], article_tpl["status"], article_tpl["color"] = get_validity_status(article_tpl["start_date"], article_tpl["end_date"], past_year_nb, future_year_nb)
@@ -163,15 +160,14 @@ class TestGetArticle:
             article["texte"]
             == "Le paiement résultant d'une obligation législative ou réglementaire n'exige pas d'engagement exprès et préalable."
         )
-        assert article["code"] == "Code de la consommation", article[
+        assert article["code"] == "CCONSO", article[
             "code"
         ]
         assert article["article"] == "L121-14"
         assert article["status"] == "Pas de modification"
-        assert article["status_code"] == 301
+        assert article["status_code"] == 204
         assert article["id"] == "LEGIARTI000032227262"
         assert article["color"] == "green"
-        # assert article["code_short_name"] == "CCONSO", article["code_short_name"]
         # assert article["nb_versions"] == 1, article["nb_versions"]
 
     @pytest.mark.parametrize(
@@ -194,10 +190,10 @@ class TestGetArticle:
         code_short_name, art_num, art_id, status_code = input_expected
         article = get_article(code_short_name, art_num, client_id, client_secret)
         assert article["id"] == art_id, (code_short_name, art_num, article["id"])
-        assert article["short_code"] == code_short_name, article["code_short_name"]
-        assert article["long_code"] == MAIN_CODELIST[code_short_name], article[
-            "long_code"
-        ]
+        # assert article["short_code"] == code_short_name, article["code_short_name"]
+        # assert article["long_code"] == CODE_REFERENCE[code_short_name], article[
+        #     "long_code"
+        # ]
         assert article["status_code"] == status_code, (status_code, code_short_name,art_num)
 
     @pytest.mark.parametrize(
@@ -290,10 +286,10 @@ class TestGetArticle:
         code_short_name, art_num, art_id = input_expected
         article = get_article(code_short_name, art_num, client_id, client_secret)
         assert article["id"] == art_id, (code_short_name, art_num, article["id"])
-        assert article["code_short_name"] == code_short_name, article["code_short_name"]
-        assert article["code_full_name"] == MAIN_CODELIST[code_short_name], article[
-            "code_full_name"
-        ]
+        # assert article["code_short_name"] == code_short_name, article["code_short_name"]
+        # assert article["code_full_name"] == CODE_REFERENCE[code_short_name], article[
+        #     "code_full_name"
+        # ]
         assert article["status_code"] == 404
 
 
@@ -339,15 +335,15 @@ class TestValidityArticle:
         end = datetime.datetime(2023, 1, 1, 0, 0, 0)
         future_boundary = time_delta("+", year_nb)
         # QUESTION: avons nous besoin de différencier avant et après?
-        status_code, status_msg = get_validity_status(start, end, year_nb, year_nb)
+        status_code, status_msg, color = get_validity_status(start, end, year_nb, year_nb)
         assert end < future_boundary, (
             bool(end < future_boundary),
             end,
             future_boundary,
         )
         assert status_code == 302, status_code
-        assert status_msg == "Valable jusqu'au 01/01/2023 00:00:00", status_msg
-
+        assert status_msg == "Valable jusqu'au 01/01/2023", status_msg
+        assert color=="orange", color
     def test_validity_recently_modified(self):
         year_nb = 2
         start = datetime.datetime(2022, 8, 4, 0, 0, 0)
@@ -356,10 +352,10 @@ class TestValidityArticle:
         future_boundary = time_delta("+", year_nb)
         # QUESTION: avons nous besoin de différencier avant et après?
         assert start > past_boundary, (start > past_boundary, start, past_boundary)
-        status_code, status_msg = get_validity_status(start, end, year_nb, year_nb)
+        status_code, status_msg, color = get_validity_status(start, end, year_nb, year_nb)
         assert status_code == 301, status_code
-        assert status_msg == "Modifié le 04/08/2022 00:00:00", status_msg
-
+        assert status_msg == "Modifié le 04/08/2022", status_msg
+        assert color=="yellow", color
     def test_validity_ras(self):
         year_nb = 2
         start = datetime.datetime(1801, 8, 4, 0, 0, 0)
@@ -369,6 +365,7 @@ class TestValidityArticle:
         # QUESTION: avons nous besoin de différencier avant et après?
         assert start < past_boundary, (start < past_boundary, start, past_boundary)
         assert end > future_boundary, (end > future_boundary, end, future_boundary)
-        status_code, status_msg = get_validity_status(start, end, year_nb, year_nb)
+        status_code, status_msg, color = get_validity_status(start, end, year_nb, year_nb)
         assert status_code == 204, status_code
         assert status_msg == "Pas de modification", status_msg
+        assert color=="green", color

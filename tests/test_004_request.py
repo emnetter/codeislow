@@ -3,6 +3,7 @@ import os
 import time
 from dotenv import load_dotenv
 import pytest
+from test_002_code_references import get_code_full_name_from_short_code
 
 API_ROOT_URL = "https://sandbox-api.piste.gouv.fr/dila/legifrance-beta/lf-engine-app/"
 # API_ROOT_URL =  "https://api.piste.gouv.fr/dila/legifrance-beta/lf-engine-app/",
@@ -53,7 +54,7 @@ def get_legifrance_auth(client_id, client_secret):
     return {"Authorization": f"Bearer {access_token}"}
 
 
-def get_article_uid(code_name, article_number, headers):
+def get_article_uid(short_code_name, article_number, headers):
     """
     GET the article uid given by [Legifrance API](https://developer.aife.economie.gouv.fr/index.php?option=com_apiportal&view=apitester&usage=api&apitab=tests&apiName=L%C3%A9gifrance+Beta&apiId=426cf3c0-1c6d-46ba-a8b0-f79289086ed5&managerId=2&type=rest&apiVersion=1.6.2.5&Itemid=402&swaggerVersion=2.0&lang=fr)
 
@@ -62,13 +63,12 @@ def get_article_uid(code_name, article_number, headers):
         article_number: Référence de l'article mentionné (version normalisée eg. L25-67)
 
     Returns:
-        article: un dictionnaire qui contient l'identifiant unique de l'article dans legifrance, le nom du code en version courte et en version longue
         article_uid: Identifiant unique de l'article dans Legifrance or None
 
     """
-    long_code, short_code = get_long_and_short_code(code_name)
+    long_code = get_code_full_name_from_short_code(short_code_name)
     if long_code is None:
-        raise ValueError(f"`{code_name}` not found in the supported Code List")
+        raise ValueError(f"`{short_code_name}` not found in the supported Code List")
 
     session = requests.Session()
 
@@ -119,8 +119,7 @@ def get_article_uid(code_name, article_number, headers):
     else:
         # get the first result
         try:
-            article_uid = results[0]["sections"][0]["extracts"][0]["id"]
-            return {"id": article_uid, "article": article_number, "short_code": short_code, "long_code": long_code}
+            return results[0]["sections"][0]["extracts"][0]["id"]
         except IndexError:
             return None
     
@@ -231,7 +230,7 @@ class TestGetArticleId:
         client_secret = os.getenv("API_SECRET")
         headers = get_legifrance_auth(client_id, client_secret)
         article = get_article_uid("CCIV", "1120", headers)
-        assert article["id"] == "LEGIARTI000032040861", article["id"]
+        assert article == "LEGIARTI000032040861", article
 
     @pytest.mark.parametrize(
         "input_expected",
@@ -249,7 +248,7 @@ class TestGetArticleId:
         code_name, art_num, expected = input_expected
         headers = get_legifrance_auth(client_id, client_secret)
         article_uid = get_article_uid(code_name, art_num, headers)
-        assert expected == article_uid["id"]
+        assert expected == article_uid
 
     def test_get_article_uid_wrong_article_num(self):
         load_dotenv()
@@ -257,7 +256,7 @@ class TestGetArticleId:
         client_secret = os.getenv("API_SECRET")
         headers = get_legifrance_auth(client_id, client_secret)
         article_uid = get_article_uid("CCIV", "11-20", headers)
-        assert article_uid == None, article_uid["id"]
+        assert article_uid == None, article_uid
 
     def test_get_article_uid_wrong_code_name(self):
         load_dotenv()

@@ -3,15 +3,14 @@ import re
 import pytest
 
 from test_001_parsing import parse_doc
-from test_002_code_references import CODE_REFERENCE, CODE_REGEX, filter_code_regex
+from test_002_code_references import filter_code_regex, CODE_REFERENCE
 
 ARTICLE_REGEX = r"(?P<art>(Articles?|Art\.))"
 
 # ARTICLE_REF = re.compile("\d+")
-# ARTICLE_ID = re.compile("?((L|R|A|D)?(\.))(\d+)?(-\d+)?(\s(al\.|alinea)\s\d+)")
+ARTICLE_ID = "(L|R|A|D)?(\.|\s)?\d+(-\d+)?((\s(al\.|alinea)?\s\d+)?"
 
-def build_pattern(short_code_list):
-    code_regex = 
+
 
 def switch_pattern(short_code_list=[], pattern="article_code"):
     """
@@ -35,7 +34,7 @@ def switch_pattern(short_code_list=[], pattern="article_code"):
         
         return re.compile(f"{ARTICLE_REGEX}(?P<ref>.*?){code_regex}", flags=re.I)
     else:
-        return re.compile(f"({code_regex}\s?{ARTICLE_REGEX}(?P<ref>.*?)", flags=re.I)
+        return re.compile(f"{code_regex}.*?{ARTICLE_REGEX}(\s|\.)(?P<ref>.*?)(\.|\s)", flags=re.I)
 
 
 def match_code_and_articles(full_text, selected_short_codes=[], pattern_format="article_code"):
@@ -121,7 +120,7 @@ def gen_matching_results(full_text, selected_shortcodes=[], pattern_format="arti
         code_long_name
         article
     """
-    article_pattern = switch_pattern(pattern_format)
+    article_pattern = switch_pattern(selected_shortcodes, pattern_format)
     code_found = {}
 
     # normalisation
@@ -168,10 +167,10 @@ def gen_matching_results(full_text, selected_shortcodes=[], pattern_format="arti
             if special_ref[0] in ["L", "A", "R", "D"]:
                 # normalized_refs.append("".join(special_ref))
                 
-                yield(code, MAIN_CODELIST[code], "".join(special_ref))
+                yield(code, "".join(special_ref))
             else:
                 # normalized_refs.append(ref)
-                yield(code, MAIN_CODELIST[code], ref)
+                yield(code, ref)
 
 class TestMatching:
     def test_matching_code(self):
@@ -209,7 +208,7 @@ class TestMatching:
             abspath = os.path.join(
                 os.path.dirname(os.path.realpath(__file__)), file_path
             )
-            logging.debug(f"[LOAD] filename: {abspath}")
+            # logging.debug(f"[LOAD] filename: {abspath}")
             full_text = parse_doc(abspath)
             # logging.debug(f'[PARSE] filename: {abspath} - found {len(full_text)} sentences')
             results = match_code_and_articles(full_text)
@@ -269,55 +268,21 @@ class TestMatching:
             # logging.debug(f"[LOAD] filename: {abspath}")
             full_text = parse_doc(abspath)
             # logging.debug(f'[PARSE] filename: {abspath} - found {len(full_text)} sentences')
-            results = match_code_and_articles(full_text,"code_article")
+            results = match_code_and_articles(full_text, ["CCIV","CPRCIV" ], "code_article")
+            assert list(results.keys()) == ["CCIV", "CPRCIV"], list(results.keys())
             #WIP reversed is not working
-            assert list(results.keys()) == [], list(results.keys())
             
-            # assert results["CCIV"] == [
-            #     "1120",
-            #     "2288",
-            #     "1240-1",
-            #     "1140",
-            #     "1",
-            #     "349",
-            #     "39999",
-            #     "3-12",
-            #     "12-4-6",
-            #     "14",
-            #     "15",
-            #     "27",
-            # ], results["CCIV"]
-            # assert results["CPRCIV"] == ["1038", "1289-2"], results["CPRCIV"]
-            # assert results["CASSUR"] == ["L385-2", "R343-4", "A421-13"], results[
-            #     "CASSUR"
-            # ]
-            # assert results["CCOM"] == ["L611-2"], results["CCOM"]
-            # assert results["CTRAV"] == ["L1111-1"], results["CTRAV"]
-            # assert results["CPI"] == ["L112-1", "L331-4"], results["CPI"]
-            # assert results["CPEN"] == ["131-4", "225-7-1"], results["CPEN"]
-            # assert results["CPP"] == ["694-4-1", "R57-6-1"], results["CPP"]
-            # assert results["CCONSO"] == ["L121-14", "R742-52"], results["CCONSO"]
-            # assert results["CSI"] == ["L622-7", "R314-7"], results["CSI"]
-            # assert results["CSS"] == ["L173-8"], results["CSS"]
-            # assert results["CSP"] == ["L1110-1"], results["CSP"]
-            # assert results["CENV"] == ["L124-1"], ("CENV", results["CENV"])
-            # assert results["CJA"] == ["L121-2"], ("CJA", results["CJA"])
-            # assert results["CGCT"] == ["L1424-71", "L1"], ("CGCT", results["CGCT"])
-            # assert results["CESEDA"] == ["L753-1", "12"], ("CESEDA", results["CESEDA"])
     def test_matching_generator(self):
         file_paths = ["newtest.doc", "newtest.docx", "newtest.pdf"]
         for file_path in file_paths:
             abspath = os.path.join(
                 os.path.dirname(os.path.realpath(__file__)), file_path
             )
-            # logging.debug(f"[LOAD] filename: {abspath}")
             full_text = parse_doc(abspath)
-            # logging.debug(f'[PARSE] filename: {abspath} - found {len(full_text)} sentences')
-            for match in gen_matching_results(full_text):
-                assert len(match) == 3, match
-                assert match[2] != "", match[2]
-                assert match[1] == MAIN_CODELIST[match[0]]
-    
+            for match in gen_matching_results(full_text, [], "article_code"):
+                assert match[0] in CODE_REFERENCE.keys(), match[0]
+                assert match[1] != "", match[1]
+                
     def test_matching_reverse_format_generator(self):
         file_paths = ["testnew.odt", "newtest.pdf"]
         for file_path in file_paths:
@@ -328,7 +293,6 @@ class TestMatching:
             full_text = parse_doc(abspath)
             
             # logging.debug(f'[PARSE] filename: {abspath} - found {len(full_text)} sentences')
-            for match in gen_matching_results(full_text, "code_article"):
-                assert match[2] != "AAAA", match[2]
-                assert len(match) == 3, match
-                assert match[1] == MAIN_CODELIST[match[0]]
+            for match in gen_matching_results(full_text, [], "code_article"):
+                assert match[0] in CODE_REFERENCE.keys(), match[0]
+                assert match[1] != "", match[1]
