@@ -34,14 +34,15 @@ def upload_document(upload, past, future):
     load_dotenv()
     client_id = os.getenv("API_KEY")
     client_secret = os.getenv("API_SECRET")
-    for code, code_name, article in gen_matching_results(full_text):
-        yield get_article(code_name, article, client_id, client_secret, past_year_nb=past, future_year_nb=future)
+    try:
+        for code, code_name, article in gen_matching_results(full_text):
+            
+            yield get_article(code_name, article, client_id, client_secret, past_year_nb=past, future_year_nb=future)
+    except Exception as e:
+        return (501, e, None, None)
     # os.remove(file_path)
     # return found_articles
 
-file_input_html = '''
-
-'''
 
 app = Bottle()
 
@@ -99,7 +100,16 @@ def analyse_document():
     <th>Texte</th>
     </tr>"""
     for i,result in enumerate(upload_document(upload, past, future)):
-        
+        if isinstance(result, list):
+            
+            return f"""<tr>
+                            <td>Error: {result[0]}</td>
+                            <td>{result[1]}</td>
+                            <td></td>
+                            <td></td>
+                        <td class="w3-col"></td>
+                    </tr>
+                    """     
         if result["status_code"] == 204:
             css_class = "w3-green"
         elif result["status_code"] == 301:
@@ -115,7 +125,18 @@ def analyse_document():
                             <td>{result['number']}</td>
                             <td><span class="w3-tag {css_class}">{result['status']}</span></td>
                         <td class="w3-col"></td>
-                    </tr>"""
+                    </tr>"""+f"""</table></div>
+    <div class="container">
+    <div class='w3-card w3-margin w3-pale-green'>
+        <p class="w3-margin"><b>{i+1}</b> articles detectés dans le document {document_name}</p>
+    </div>
+     <div class="w3-bar w3-center">
+        <a href="/" class="w3-button w3-red"><i class="fa fa-home"></i>Retour</a>
+        <a href="/export" class="w3-button w3-black w3-disabled"><i class="fa fa-download"></i>Enregister en csv</a>
+        <a href="/https://github.com/emnetter/codeislow/issues/new" class="w3-button w3-blue w3-disabled"><i class="fa fa-download"></i>Poser une question</a>
+    </div> 
+    </div>
+    </html>"""
         else:
             yield f"""<tr>
             <td>{i+1}</td>
