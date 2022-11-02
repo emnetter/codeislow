@@ -1,40 +1,19 @@
-import logging
 import os
 import re
 import pytest
 
 from test_001_parsing import parse_doc
-from test_003_request import MAIN_CODELIST
-
-# logging.basicConfig(filename="matching.log", encoding="utf-8", level=logging.DEBUG)
+from test_002_code_references import CODE_REFERENCE, CODE_REGEX, filter_code_regex
 
 ARTICLE_REGEX = r"(?P<art>(Articles?|Art\.))"
-CODE_DICT = {
-    "CCIV": r"(?P<CCIV>Code civil|C\.\sciv\.|Code\sciv\.|C\.civ\.|civ\.|CCIV)",
-    "CPRCIV": r"(?P<CPRCIV>Code\sde\sprocédure civile|C\.\spr\.\sciv\.|CPC)",
-    "CCOM": r"(?P<CCOM>Code\sde\scommerce|C\.\scom\.)",
-    "CTRAV": r"(?P<CTRAV>Code\sdu\stravail|C\.\strav\.)",
-    "CPI": r"(?P<CPI>Code\sde\sla\spropriété\sintellectuelle|CPI|C\.\spr\.\sint\.)",
-    "CPEN": r"(?P<CPEN>Code\spénal|C\.\spén\.)",
-    "CPP": r"(?P<CPP>Code\sde\sprocédure\spénale|CPP)",
-    "CASSU": r"(?P<CASSUR>Code\sdes\sassurances|C\.\sassur\.)",
-    "CCONSO": r"(?P<CCONSO>Code\sde\sla\sconsommation|C\.\sconso\.)",
-    "CSI": r"(?P<CSI>Code\sde\slasécurité intérieure|CSI)",
-    "CSP": r"(?P<CSP>Code\sde\slasanté publique|C\.\ssant\.\spub\.|CSP)",
-    "CSS": r"(?P<CSS>Code\sde\slasécurité sociale|C\.\ssec\.\ssoc\.|CSS)",
-    "CESEDA": r"(?P<CESEDA>Code\sde\sl'entrée\set\sdu\sséjour\sdes\sétrangers\set\sdu\sdroit\sd'asile|CESEDA)",
-    "CGCT": r"(?P<CGCT>Code\sgénéral\sdes\scollectivités\sterritoriales|CGCT)",
-    "CPCE": r"(?P<CPCE>Code\sdes\spostes\set\sdes\scommunications\sélectroniques|CPCE)",
-    "CENV": r"(?P<CENV>Code\sde\sl'environnement|C.\senvir.|\sCE\.?\s\.?)",
-    "CJA": r"(?P<CJA>Code\sde\sjustice\sadministrative|CJA)",
-}
 
-CODE_REGEX = "|".join(CODE_DICT.values())
 # ARTICLE_REF = re.compile("\d+")
 # ARTICLE_ID = re.compile("?((L|R|A|D)?(\.))(\d+)?(-\d+)?(\s(al\.|alinea)\s\d+)")
 
+def build_pattern(short_code_list):
+    code_regex = 
 
-def switch_pattern(pattern="article_code"):
+def switch_pattern(short_code_list=[], pattern="article_code"):
     """
     Build pattern recognition using pattern short code switch
 
@@ -46,18 +25,20 @@ def switch_pattern(pattern="article_code"):
     Raise:
         ValueError: pattern name is wrong
     """
+    code_regex = filter_code_regex(short_code_list)
 
     if pattern not in ["article_code", "code_article"]:
         raise ValueError(
             "Wrong pattern name: choose between 'article_code' or 'code_article'"
         )
     if pattern == "article_code":
-        return re.compile(f"{ARTICLE_REGEX}(?P<ref>.*?)({CODE_REGEX})", flags=re.I)
+        
+        return re.compile(f"{ARTICLE_REGEX}(?P<ref>.*?){code_regex}", flags=re.I)
     else:
-        return re.compile(f"(({CODE_REGEX}){ARTICLE_REGEX}(?P<ref>.*?)$)", flags=re.I)
+        return re.compile(f"({code_regex}\s?{ARTICLE_REGEX}(?P<ref>.*?)", flags=re.I)
 
 
-def match_code_and_articles(full_text, pattern_format="article_code"):
+def match_code_and_articles(full_text, selected_short_codes=[], pattern_format="article_code"):
     """ "
     Detect law articles of supported codes
 
@@ -68,7 +49,7 @@ def match_code_and_articles(full_text, pattern_format="article_code"):
     Returns:
         code_found: a dict compose of short version of code as key and list of the detected articles references  as values {code: [art_ref, art_ref2, ... ]}
     """
-    article_pattern = switch_pattern(pattern_format)
+    article_pattern = switch_pattern(selected_short_codes, pattern_format)
     code_found = {}
 
     # normalisation
@@ -126,12 +107,13 @@ def match_code_and_articles(full_text, pattern_format="article_code"):
 
     return code_found
 
-def gen_matching_results(full_text, pattern_format="article_code"):
-    """ "
+def gen_matching_results(full_text, selected_shortcodes=[], pattern_format="article_code"):
+    """"
     Detect law articles of supported codes
 
     Arguments:
         full_text: a string of the full document normalized
+        selected_shortcodes: a list of selected codes in short format 
         pattern_format: a string representing the pattern format article_code or code_article. Defaut to article_code
 
     Yield:
@@ -198,9 +180,7 @@ class TestMatching:
             abspath = os.path.join(
                 os.path.dirname(os.path.realpath(__file__)), file_path
             )
-            logging.debug(f"[LOAD] filename: {abspath}")
             full_text = parse_doc(abspath)
-            # logging.debug(f'[PARSE] filename: {abspath} - found {len(full_text)} sentences')
             results = match_code_and_articles(full_text)
             code_list = list(results.keys())
             assert len(code_list) == 16, len(code_list)
