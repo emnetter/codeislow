@@ -22,9 +22,9 @@ def convert_date_to_datetime(date):
     return datetime.datetime.fromordinal(date.toordinal())
 
 
-# def convert_datetime_to_date(date_time):
-#     date_time.replace(hour=0, minute=0, second=0)
-#     return date_time
+def convert_datetime_to_date(date_time):
+    date_time.replace(hour=0, minute=0, second=0)
+    return date_time
 
 
 def convert_epoch_to_datetime(epoch):
@@ -49,15 +49,16 @@ def convert_datetime_to_str(date_time):
     return datetime.datetime.strftime(date_time, "%d/%m/%Y %H:%M:%S")
 
 
-# def convert_str_to_datetime(date_time):
-#     '''
-#     convert string format into datetime
-#     Arguments:
-#         date_str: string representation of a date
-#     Returns:
-#         date_time: datetime
-#     '''
-#     return datetime.datetime.strptime(date_time, "%d/%m/%Y %H:%M:%S")
+def convert_str_to_datetime(date_time):
+    '''
+    convert string format into datetime
+    Arguments:
+        date_str: string representation of a date
+    Returns:
+        date_time: datetime
+    '''
+    return datetime.datetime.strptime(date_time, "%d/%m/%Y %H:%M:%S")
+
 def check_code_name_is_short(code_name):
     return code_name in MAIN_CODELIST.keys()
 
@@ -91,12 +92,15 @@ def get_validity_status(start, end, year_before, year_after):
     """
     past_boundary = time_delta("-", year_before)
     future_boundary = time_delta("+", year_after)
+    #removing HH:MM:SS
+    start_date_str = convert_datetime_to_str(start).split(" ")[0]
+    end_date_str = convert_datetime_to_str(end).split(" ")[0]
     if start > past_boundary:
-        return (301, "Modifié le {}".format(convert_datetime_to_str(start)))
+        return (301, f"Modifié le {start_date_str}", "yellow")
     if end < future_boundary:
-        return (302, "Valable jusqu'au {}".format(convert_datetime_to_str(end)))
+        return (302, "Valable jusqu'au {end_date_str}", "orange")
     if start < past_boundary and end > future_boundary:
-        return (204, "Pas de modification")
+        return (204, "Pas de modification", "green")
 
 
 def get_article(code_name, article_number, client_id, client_secret, past_year_nb=3, future_year_nb=3):
@@ -126,9 +130,10 @@ def get_article(code_name, article_number, client_id, client_secret, past_year_n
         "status": "OK",
     }
     article_id = get_article_uid(
-        code_name, article_number, headers=get_legifrance_auth(client_id, client_secret)
+        long_code, article_number, headers=get_legifrance_auth(client_id, client_secret)
     )
     if article_id is None:
+        article["color"] = "red"
         article["status_code"] = 404
         article["status"] = "Indisponible"
         article["id"] = None
@@ -140,11 +145,11 @@ def get_article(code_name, article_number, client_id, client_secret, past_year_n
     # convert epoch to datetime
     article["start_date"] = convert_epoch_to_datetime(article["dateDebut"])
     article["end_date"] = convert_epoch_to_datetime(article["dateFin"])
-    article["status_code"], article["status"] = get_validity_status(article["start_date"], article["end_date"], past_year_nb, future_year_nb)
+    article["status_code"], article["status"], article["color"] = get_validity_status(article["start_date"], article["end_date"], past_year_nb, future_year_nb)
     article["date_debut"] = convert_datetime_to_str(article["start_date"])
     article["date_fin"] = convert_datetime_to_str(article["end_date"])
-    # del article["dateDebut"]
-    # del article["dateFin"]
+    del article["dateDebut"]
+    del article["dateFin"]
     return article
 
 
