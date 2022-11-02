@@ -40,8 +40,8 @@ def parse_doc(file_path):
     elif doc_ext == "odt":
         with open(file_path, "rb") as f:
             document = load(f)
-            paragraphs = len(document.getElementsByType(text.P))
-            for i in range(paragraphs):
+            paragraphs = document.getElementsByType(text.P)
+            for i in range(len(paragraphs)):
                 full_text.append((teletype.extractText(paragraphs[i])))
     else:
         # if doc_ext in ["docx", "doc"]:
