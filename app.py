@@ -13,7 +13,7 @@ from parsing import parse_doc
 from matching import match_code_and_articles, gen_matching_results
 from checking import get_article
 
-def upload_document(upload):
+def upload_document(upload, past, future):
     '''
     Téléverser le document le stocker temporairement
     Arguments:
@@ -35,7 +35,7 @@ def upload_document(upload):
     client_id = os.getenv("API_KEY")
     client_secret = os.getenv("API_SECRET")
     for code, code_name, article in gen_matching_results(full_text):
-        yield get_article(code_name, article, client_id, client_secret, past_year_nb=3, future_year_nb=3)
+        yield get_article(code_name, article, client_id, client_secret, past_year_nb=past, future_year_nb=future)
     # os.remove(file_path)
     # return found_articles
 
@@ -60,6 +60,8 @@ def code_list():
 @app.route("/upload", method="POST")
 def analyse_document():
     upload = request.files.get("upload")
+    past = request.get("user_past")
+    future = request.get("user_future")
     # try:
     #     article_found = upload_document(upload)
     # except Exception as e:
@@ -96,7 +98,7 @@ def analyse_document():
     <th>Statut</th>
     <th>Texte</th>
     </tr>"""
-    for i,result in enumerate(upload_document(upload)):
+    for i,result in enumerate(upload_document(upload, past, future)):
         
         if result["status_code"] == 204:
             css_class = "w3-green"
