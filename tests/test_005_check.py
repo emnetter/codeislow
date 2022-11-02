@@ -9,11 +9,10 @@ from dateutil.relativedelta import relativedelta
 import pytest
 
 from test_003_request import (
-    MAIN_CODELIST,
     get_legifrance_auth,
     get_article_uid,
     get_article_content,
-    get_short_code_from_full_name
+    
 )
 
 
@@ -90,54 +89,58 @@ def get_validity_status(start, end, year_before, year_after):
     past_boundary = time_delta("-", year_before)
     future_boundary = time_delta("+", year_after)
     if start > past_boundary:
-        return (301, "Modifié le {}".format(convert_datetime_to_str(start).split(" ")[0]))
+        return (301, "Modifié le {}".format(convert_datetime_to_str(start).split(" ")[0]), "yellow")
     if end < future_boundary:
-        return (302, "Valable jusqu'au {}".format(convert_datetime_to_str(end).split(" ")[0]))
+        return (302, "Valable jusqu'au {}".format(convert_datetime_to_str(end).split(" ")[0]), "orange")
     if start < past_boundary and end > future_boundary:
-        return (204, "Pas de modification")
+        return (204, "Pas de modification", "green")
 
 
-def get_article(code_name, article_number, client_id, client_secret, past_year_nb=3, future_year_nb=3):
+def get_article(long_code_name, article_number, client_id, client_secret, past_year_nb=3, future_year_nb=3):
     """
-    Accéder aux informations de status de l'article
+    Accéder aux informations simplifiée de l'article
 
     Arguments:
-        code_name: Nom du code de loi française dans sa version longue
+        long_code_name: Nom du code de loi française dans sa version longue
         article_number: NUméro de l'article de loi normalisé ex. R25-67 L214 ou 2667-1-1
     Returns:
-        article: Un dictionnaire json avec le texte les dates de début et de fin, l'url, les versions de l'article
-    Raise:
-        Exception(Indisponible): L'article n'a pas été trouvé
-        ValueError(Code indisponible): Le nom du code est incorrect/ n'a pas été trouvé
+        article: Un dictionnaire json avec code, article, status, status_code, color, url, text, id, start_date, end_date, date_debut, date_fin
+    
     """
-    article = {
-        "code_full_name": code_name,
-        "code_short_name":get_short_code_from_full_name(code_name),
-        "number": article_number,
+    long_code_name, short_code_name = get_long_and_short_code(long_code_name)
+    article_tpl = {
+        "code": long_code_name,
+        "article": article_number,
         "status_code": 200,
         "status": "OK",
+        "color": "grey",
+        "url": "",
+        "texte": "",
+        "id": None
     }
     article_id = get_article_uid(
-        code_name, article_number, headers=get_legifrance_auth(client_id, client_secret)
+        long_code_name, article_number, headers=get_legifrance_auth(client_id, client_secret)
     )
     if article_id is None:
-        article["status_code"] = 404
-        article["status"] = "Indisponible"
-        article["id"] = None
-        return article
+        article_tpl["color"] = "red"
+        article_tpl["status_code"] = 404
+        article_tpl["status"] = "Indisponible"
+        article_tpl["id"] = article_id
+        return article_tpl
     article_content = get_article_content(
         article_id, headers=get_legifrance_auth(client_id, client_secret)
     )
-    article.update(article_content)
+    article_tpl["texte"] = article_content["texte"]
+    article_tpl["url"] = article_content["url"]
+    # article.update(article_content)
     # convert epoch to datetime
-    article["start_date"] = convert_epoch_to_datetime(article["dateDebut"])
-    article["end_date"] = convert_epoch_to_datetime(article["dateFin"])
-    article["status_code"], article["status"] = get_validity_status(article["start_date"], article["end_date"], past_year_nb, future_year_nb)
-    article["date_debut"] = convert_datetime_to_str(article["start_date"])
-    article["date_fin"] = convert_datetime_to_str(article["end_date"])
-    # del article["dateDebut"]
-    # del article["dateFin"]
-    return article
+    article_tpl["start_date"] = convert_epoch_to_datetime(article_content["dateDebut"])
+    article_tpl["end_date"] = convert_epoch_to_datetime(article_content["dateFin"])
+    article_tpl["status_code"], article_tpl["status"], article_tpl["color"] = get_validity_status(article_tpl["start_date"], article_tpl["end_date"], past_year_nb, future_year_nb)
+    article_tpl["date_debut"] = convert_datetime_to_str(article_tpl["start_date"]).split(" ")[0]
+    article_tpl["date_fin"] = convert_datetime_to_str(article_tpl["end_date"]).split(" ")[0]
+    return article_tpl
+
 
 
 class TestGetArticle:
@@ -145,9 +148,7 @@ class TestGetArticle:
         load_dotenv()
         client_id = os.getenv("API_KEY")
         client_secret = os.getenv("API_SECRET")
-        article = get_article("CCONSO", "L121-14", client_id, client_secret)
-        assert article["dateDebut"] == 1467331200000, article["dateDebut"]
-        assert article["dateFin"] == 32472144000000, article["dateFin"]
+        article = get_article("CCONSO", "L121-14", client_id, client_secret, past_year_nb=3, future_year_nb=3)
         assert article["start_date"] == datetime.datetime(2016, 7, 1, 0, 0), article[
             "start_date"
         ]
@@ -162,11 +163,16 @@ class TestGetArticle:
             article["texte"]
             == "Le paiement résultant d'une obligation législative ou réglementaire n'exige pas d'engagement exprès et préalable."
         )
-        assert article["code_full_name"] == "Code de la consommation", article[
-            "code_full_name"
+        assert article["code"] == "Code de la consommation", article[
+            "code"
         ]
-        assert article["code_short_name"] == "CCONSO", article["code_short_name"]
-        assert article["nb_versions"] == 1, article["nb_versions"]
+        assert article["article"] == "L121-14"
+        assert article["status"] == "Pas de modification"
+        assert article["status_code"] == 301
+        assert article["id"] == "LEGIARTI000032227262"
+        assert article["color"] == "green"
+        # assert article["code_short_name"] == "CCONSO", article["code_short_name"]
+        # assert article["nb_versions"] == 1, article["nb_versions"]
 
     @pytest.mark.parametrize(
         "input_expected",
@@ -188,9 +194,9 @@ class TestGetArticle:
         code_short_name, art_num, art_id, status_code = input_expected
         article = get_article(code_short_name, art_num, client_id, client_secret)
         assert article["id"] == art_id, (code_short_name, art_num, article["id"])
-        assert article["code_short_name"] == code_short_name, article["code_short_name"]
-        assert article["code_full_name"] == MAIN_CODELIST[code_short_name], article[
-            "code_full_name"
+        assert article["short_code"] == code_short_name, article["code_short_name"]
+        assert article["long_code"] == MAIN_CODELIST[code_short_name], article[
+            "long_code"
         ]
         assert article["status_code"] == status_code, (status_code, code_short_name,art_num)
 
