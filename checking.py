@@ -8,6 +8,7 @@ import datetime
 from dateutil.relativedelta import relativedelta
 import pytest
 
+
 from requesting import (
     MAIN_CODELIST,
     get_legifrance_auth,
@@ -19,48 +20,102 @@ from requesting import (
 
 
 def convert_date_to_datetime(date):
+    '''
+    Convert date object to datetime object
+    Arguments: 
+        date: date object (dd/mm/YYYY)
+    Returns:
+        datetime: datetime object (dd/mm/YYYY HH:MM:SS)
+    '''
     return datetime.datetime.fromordinal(date.toordinal())
 
 
 def convert_datetime_to_date(date_time):
+    '''
+    Convert datetime object to date object
+    Arguments: 
+        datetime: datetime object (dd/mm/YYYY HH:MM:SS)
+    Returns:
+        date: date object (dd/mm/YYYY)    
+    '''
     date_time.replace(hour=0, minute=0, second=0)
     return date_time
 
 
 def convert_epoch_to_datetime(epoch):
-    """convert epoch (seconds till 01/01/1970) to date"""
+    """
+    Convert epoch (timestamp in seconds) to datetime object
+    Arguments: 
+        epoch: number of seconds till 1970/01/01
+    Returns:
+        datetime: datetime object (dd/mm/YYYY HH:MM:SS)    
+    """
     return datetime.datetime.utcfromtimestamp(epoch / 1000)
 
 
 def convert_datetime_to_epoch(date_time):
-    """convert datetime to epoch"""
+    """
+    Convert datetime object to epoch (timestamp in seconds) 
+    Arguments: 
+        date_time: datetime object (dd/mm/YYYY HH:MM:SS)
+    Returns:
+        epoch: number of milliseconds till 1970/01/01
+    """
     epoch = datetime.datetime.utcfromtimestamp(0)
     # return date_time - epoch
     return (date_time - epoch).total_seconds() * 1000
 
 
 def convert_date_to_str(date_time):
-    """convert datetime into string format"""
+    """
+    convert date object into string representtation (dd/mm/YYYY)
+    Arguments: 
+        date_time: datetime object (dd/mm/YYYY HH:MM:SS)
+    Returns:
+        date_str: "dd/mm/YYYY"
+    """
     return datetime.datetime.strftime(date_time[:4], "%d/%m/%Y")
 
 
 def convert_datetime_to_str(date_time):
-    """convert datetime into string format"""
+    """
+    Convert datetime into string format
+    Arguments: 
+        date_time: datetime object (dd/mm/YYYY HH:MM:SS)
+    Returns:
+        datetime_str: "dd/mm/YYYY HH:MM:SS"
+    """
     return datetime.datetime.strftime(date_time, "%d/%m/%Y %H:%M:%S")
 
 
 def convert_str_to_datetime(date_time):
     '''
-    convert string format into datetime
+    Convert string format into datetime
     Arguments:
-        date_str: string representation of a date
+        datetime_str: "dd/mm/YYYY HH:MM:SS"
     Returns:
-        date_time: datetime
+        date_time: datetime object (dd/mm/YYYY HH:MM:SS)
     '''
     return datetime.datetime.strptime(date_time, "%d/%m/%Y %H:%M:%S")
 
-def check_code_name_is_short(code_name):
-    return code_name in MAIN_CODELIST.keys()
+
+def return_code_short_and_long(code_name):
+    '''
+    Get the two version of the code: short and long given a str
+    Arguments:
+        code_name: str of code name
+    Returns:
+        short_code: str of the code name in short version
+        long_code:  str of the code name in long version
+    '''
+    if code_name in MAIN_CODELIST.keys():
+        return (code_name, MAIN_CODELIST[code_name])
+    else:
+        short_code = get_short_code_from_full_name(code_name)
+        if short_code is None:
+            return (None, code_name)
+        else:
+            return (short_code, code_name)        
 
 def time_delta(operator, year_nb):
     if operator not in ["-", "+"]:
@@ -116,19 +171,24 @@ def get_article(code_name, article_number, client_id, client_secret, past_year_n
         Exception(Indisponible): L'article n'a pas été trouvé
         ValueError(Code indisponible): Le nom du code est incorrect/ n'a pas été trouvé
     """
-    if check_code_name_is_short(code_name):
-        short_code = code_name
-        long_code = get_code_full_name_from_short_code(code_name)
+    short_code, long_code = return_code_short_and_long(code_name)
+    if short_code is None:
+        article = {
+            "code_full_name": long_code,
+            "code_short_name": short_code,
+            "number": article_number,
+            "status_code": 404,
+            "status": "Le nom du code n'a pas été trouvé",
+        }
     else:
-        long_code = code_name
-        short_code = get_short_code_from_full_name(code_name)
-    article = {
-        "code_full_name": long_code,
-        "code_short_name": short_code,
-        "number": article_number,
-        "status_code": 200,
-        "status": "OK",
-    }
+        article = {
+            "code_full_name": long_code,
+            "code_short_name": short_code,
+            "number": article_number,
+            "status_code": 200,
+            "status": "OK",
+            "color": "blue"
+        }
     article_id = get_article_uid(
         long_code, article_number, headers=get_legifrance_auth(client_id, client_secret)
     )
