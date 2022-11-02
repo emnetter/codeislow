@@ -1,24 +1,28 @@
 #!/usr/bin/env python
 
-from webtest import TestApp
-from webtest import Upload
-from app import app
+import os
+from dotenv import load_dotenv
+from parsing import parse_doc
+from matching import match_code_and_articles, gen_matching_results
+from checking import get_article
 
-def test_index():
-    app = TestApp(app)
-    assert app.get('/').status_int == 200
-    assert "Chargez le fichier à analyser" in  app.get('/').text 
+def main_process_gen(file_path, past=3, future=3):
+    full_text = parse_doc(file_path)
+    load_dotenv()
+    client_id = os.getenv("API_KEY")
+    client_secret = os.getenv("API_SECRET")
+    for code, code_name, article in gen_matching_results(full_text):
+        yield get_article(code_name, article, client_id, client_secret, past_year_nb=past, future_year_nb=future)
 
-# class TestUserInput:
-#     def test_upload_file(self):
-#         # """Test can upload file"""
-#         # data['file'] = (io.BytesIO(b"abcdef"), 'test.jpg')
-#         # self.login()
-#         # response = self.client.post(
-#         #     url_for('adverts.save'), data=data, follow_redirects=True,
-#         #     content_type='multipart/form-data'
-#         # )
-#         # self.assertIn(b'Your item has been saved.', response.data)
-#         # advert = Item.query.get(1)
-#         # self.assertIsNotNone(item.logo)
-#         pass
+def main_static_process(file_path, past=3, future=3):
+    full_text = parse_doc(file_path)
+    load_dotenv()
+    client_id = os.getenv("API_KEY")
+    client_secret = os.getenv("API_SECRET")
+    matching_results = match_code_and_articles(full_text)
+    full_results = []
+    for code_name, matches in matching_results.items():
+        for article in matches:
+            full_article = get_article(code_name, article, client_id, client_secret, past_year_nb=past, future_year_nb=future)
+            full_results.append(full_article)
+            

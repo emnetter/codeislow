@@ -54,7 +54,7 @@ def switch_pattern(pattern="article_code"):
     if pattern == "article_code":
         return re.compile(f"{ARTICLE_REGEX}(?P<ref>.*?)({CODE_REGEX})", flags=re.I)
     else:
-        return re.compile(f"({CODE_REGEX}){ARTICLE_REGEX}(?P<ref>.*?)$)", flags=re.I)
+        return re.compile(f"(({CODE_REGEX}){ARTICLE_REGEX}(?P<ref>.*?)$)", flags=re.I)
 
 
 def match_code_and_articles(full_text, pattern_format="article_code"):
@@ -185,6 +185,7 @@ def gen_matching_results(full_text, pattern_format="article_code"):
             special_ref = ref.split("-", 1)
             if special_ref[0] in ["L", "A", "R", "D"]:
                 # normalized_refs.append("".join(special_ref))
+                
                 yield(code, MAIN_CODELIST[code], "".join(special_ref))
             else:
                 # normalized_refs.append(ref)
@@ -278,7 +279,51 @@ class TestMatching:
             assert results["CJA"] == ["L121-2"], ("CJA", results["CJA"])
             assert results["CGCT"] == ["L1424-71", "L1"], ("CGCT", results["CGCT"])
             assert results["CESEDA"] == ["L753-1", "12"], ("CESEDA", results["CESEDA"])
-
+    
+    def test_matching_reversed_format_articles_references(self):
+        file_paths = ["testnew.odt", "testnew.pdf"]
+        for file_path in file_paths:
+            abspath = os.path.join(
+                os.path.dirname(os.path.realpath(__file__)), file_path
+            )
+            # logging.debug(f"[LOAD] filename: {abspath}")
+            full_text = parse_doc(abspath)
+            # logging.debug(f'[PARSE] filename: {abspath} - found {len(full_text)} sentences')
+            results = match_code_and_articles(full_text,"code_article")
+            #WIP reversed is not working
+            assert list(results.keys()) == [], list(results.keys())
+            
+            # assert results["CCIV"] == [
+            #     "1120",
+            #     "2288",
+            #     "1240-1",
+            #     "1140",
+            #     "1",
+            #     "349",
+            #     "39999",
+            #     "3-12",
+            #     "12-4-6",
+            #     "14",
+            #     "15",
+            #     "27",
+            # ], results["CCIV"]
+            # assert results["CPRCIV"] == ["1038", "1289-2"], results["CPRCIV"]
+            # assert results["CASSUR"] == ["L385-2", "R343-4", "A421-13"], results[
+            #     "CASSUR"
+            # ]
+            # assert results["CCOM"] == ["L611-2"], results["CCOM"]
+            # assert results["CTRAV"] == ["L1111-1"], results["CTRAV"]
+            # assert results["CPI"] == ["L112-1", "L331-4"], results["CPI"]
+            # assert results["CPEN"] == ["131-4", "225-7-1"], results["CPEN"]
+            # assert results["CPP"] == ["694-4-1", "R57-6-1"], results["CPP"]
+            # assert results["CCONSO"] == ["L121-14", "R742-52"], results["CCONSO"]
+            # assert results["CSI"] == ["L622-7", "R314-7"], results["CSI"]
+            # assert results["CSS"] == ["L173-8"], results["CSS"]
+            # assert results["CSP"] == ["L1110-1"], results["CSP"]
+            # assert results["CENV"] == ["L124-1"], ("CENV", results["CENV"])
+            # assert results["CJA"] == ["L121-2"], ("CJA", results["CJA"])
+            # assert results["CGCT"] == ["L1424-71", "L1"], ("CGCT", results["CGCT"])
+            # assert results["CESEDA"] == ["L753-1", "12"], ("CESEDA", results["CESEDA"])
     def test_matching_generator(self):
         file_paths = ["newtest.doc", "newtest.docx", "newtest.pdf"]
         for file_path in file_paths:
@@ -289,5 +334,21 @@ class TestMatching:
             full_text = parse_doc(abspath)
             # logging.debug(f'[PARSE] filename: {abspath} - found {len(full_text)} sentences')
             for match in gen_matching_results(full_text):
+                assert len(match) == 3, match
+                assert match[2] != "", match[2]
+                assert match[1] == MAIN_CODELIST[match[0]]
+    
+    def test_matching_reverse_format_generator(self):
+        file_paths = ["testnew.odt", "newtest.pdf"]
+        for file_path in file_paths:
+            abspath = os.path.join(
+                os.path.dirname(os.path.realpath(__file__)), file_path
+            )
+            # logging.debug(f"[LOAD] filename: {abspath}")
+            full_text = parse_doc(abspath)
+            
+            # logging.debug(f'[PARSE] filename: {abspath} - found {len(full_text)} sentences')
+            for match in gen_matching_results(full_text, "code_article"):
+                assert match[2] != "AAAA", match[2]
                 assert len(match) == 3, match
                 assert match[1] == MAIN_CODELIST[match[0]]

@@ -71,15 +71,15 @@ class TestFileParsing:
             assert e == "", e
 
     def test_content(self):
-        """test content"""
-        file_paths = ["newtest.doc", "newtest.docx", "newtest.pdf"]
+        """test content text"""
+        file_paths = ["newtest.doc", "newtest.docx", "newtest.pdf", "testnew.odt"]
         for file_path in file_paths:
             abspath = os.path.join(
                 os.path.dirname(os.path.realpath(__file__)), file_path
             )
             full_text = parse_doc(abspath)
             doc_name, doc_ext = abspath.split("/")[-1].split(".")
-            assert doc_name == "newtest"
+            assert doc_name == "newtest" or doc_name == "testnew"
             if abspath.endswith(".pdf"):
                 assert len(full_text) == 23, (len(full_text), abspath)
             else:
