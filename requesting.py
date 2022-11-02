@@ -177,11 +177,11 @@ def get_article_uid(code_name, article_number, headers):
             article_uid = results[0]["sections"][0]["extracts"][0]["id"]
         except IndexError:
             return None
-    article = {
-        "id": article_uid,
-        "code_name_short": code_short,
-        "code_name_long": code_long,
-    }
+    # article = {
+    #     "id": article_uid,
+    #     "code_name_short": code_short,
+    #     "code_name_long": code_long,
+    # }
     return article_uid
 
 
