@@ -13,6 +13,8 @@ from requesting import (
     get_legifrance_auth,
     get_article_uid,
     get_article_content,
+    get_short_code_from_full_name,
+    get_code_full_name_from_short_code
 )
 
 
@@ -56,7 +58,8 @@ def convert_datetime_to_str(date_time):
 #         date_time: datetime
 #     '''
 #     return datetime.datetime.strptime(date_time, "%d/%m/%Y %H:%M:%S")
-
+def check_code_name_is_short(code_name):
+    return code_name in MAIN_CODELIST.keys()
 
 def time_delta(operator, year_nb):
     if operator not in ["-", "+"]:
@@ -109,9 +112,15 @@ def get_article(code_name, article_number, client_id, client_secret, past_year_n
         Exception(Indisponible): L'article n'a pas été trouvé
         ValueError(Code indisponible): Le nom du code est incorrect/ n'a pas été trouvé
     """
+    if check_code_name_is_short(code_name):
+        short_code = code_name
+        long_code = get_code_full_name_from_short_code(code_name)
+    else:
+        long_code = code_name
+        short_code = get_short_code_from_full_name(code_name)
     article = {
-        "code_full_name": MAIN_CODELIST[code_name],
-        "code_short_name": code_name,
+        "code_full_name": long_code,
+        "code_short_name": short_code,
         "number": article_number,
         "status_code": 200,
         "status": "OK",

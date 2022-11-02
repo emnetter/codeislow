@@ -40,49 +40,22 @@ def upload_document(upload):
     # return found_articles
 
 file_input_html = '''
-<!DOCTYPE html>
-<html lang=fr>
-<head>
-    <head>
-    <title> Code is low</title>
-    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-    
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
 
-    <!-- jQuery library -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-
-    <!-- Latest compiled JavaScript -->
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
-</head>
-<body>
-<div class="w3-container w3-blue-grey">
-        <h1> Code is low</h1>
-</div>
-<div class="container w3-margin">
- 
- <form  action="/upload" class="form w3-form" method="post" enctype="multipart/form-data">
- <div class="row">
-    <div class="col">
-        <div class="form-group">
-            <label> Chargez le fichier à analyser<i>< 2 Mo</i></label>
-            <input class="form-control" type="file" name="upload" required accept = ".docx,.odt,.pdf,.doc"/>
-        </div>
-    </div>   
- </div>
- <input type="submit" value="Lancer l'analyse" />
-</form>
-</div>
-</body>
-<html>
 '''
 
 app = Bottle()
 
 @app.route("/")
 def root():
-    return file_input_html
+    return static_file("home.html", root="./")
+
+@app.route("/cgu")
+def cgu():
+    return static_file("cgu.html", root="./")
+
+@app.route("/code_list")
+def code_list():
+    return static_file("code_list.html", root="./")
 
 @app.route("/upload", method="POST")
 def analyse_document():
@@ -123,37 +96,36 @@ def analyse_document():
     <th>Statut</th>
     <th>Texte</th>
     </tr>"""
-    # for i,result in enumerate(upload_document(upload)):
+    for i,result in enumerate(upload_document(upload)):
         
-    #     if result["status_code"] == 204:
-    #         css_class = "w3-green"
-    #     elif result["status_code"] == 301:
-    #         css_class = "w3-blue"
-    #     elif result["status_code"] == 302:
-    #         css_class = "w3-orange"
-    #     else:
-    #         css_class = "w3-red"
-    #     if result["status_code"] == 404:
-    #         yield f"""<tr>
-    #                         <td>{i+1}</td>
-    #                         <td>{result['code_full_name']}</td>
-    #                         <td>{result['number']}</td>
-    #                         <td><span class="w3-tag {css_class}">{result['status']}</span></td>
-    #                     <td class="w3-col"></td>
-    #                 </tr>"""
-    #     else:
-    #         yield f"""<tr>
-    #         <td>{i+1}</td>
-    #         <td>{result['code_full_name']}</td>
-    #         <td><a href="{result['url']}">{result['number']}</a></td>
-    #         <td>
+        if result["status_code"] == 204:
+            css_class = "w3-green"
+        elif result["status_code"] == 301:
+            css_class = "w3-yellow"
+        elif result["status_code"] == 302:
+            css_class = "w3-orange"
+        else:
+            css_class = "w3-red"
+        if result["status_code"] == 404:
+            yield f"""<tr>
+                            <td>{i+1}</td>
+                            <td>{result['code_full_name']}</td>
+                            <td>{result['number']}</td>
+                            <td><span class="w3-tag {css_class}">{result['status']}</span></td>
+                        <td class="w3-col"></td>
+                    </tr>"""
+        else:
+            yield f"""<tr>
+            <td>{i+1}</td>
+            <td>{result['code_full_name']}</td>
+            <td><a href="{result['url']}">{result['number']}</a></td>
+            <td>
             
-    #         <span class="w3-tag {css_class}">{result['status']}</span>
+            <span class="w3-tag {css_class}">{result['status']}</span>
 
-    #         </td>
-    #         <td width="50%">{result['texte']} <a href="{result['url']}">...</a></td></span>
-    #         </tr>"""            
-    i = 36   
+            </td>
+            <td width="50%">{result['texte']} <a href="{result['url']}">...</a></td></span>
+            </tr>"""            
     yield f"""</table></div>
     <div class="container">
     <div class='w3-card w3-margin w3-pale-green'>
