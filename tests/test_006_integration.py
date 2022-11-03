@@ -16,6 +16,8 @@ def main(file_path, selected_codes=None, pattern_format="article_code", past=3, 
     # matching_results = yield from get_matching_result_item(full_text,selected_codes, pattern_format)
     for code, article_nb in get_matching_result_item(full_text,selected_codes, pattern_format):
         #request and check validity
+        # article = get_article(code, article_nb, client_id, client_secret, past_year_nb=past, future_year_nb=future)
+        # print(article)
         yield get_article(code, article_nb, client_id, client_secret, past_year_nb=past, future_year_nb=future)
 
 
@@ -34,3 +36,7 @@ class TestMainProcess:
             )
             for result in main(file_path):
                 assert isinstance(result, dict), result
+
+
+if __name__ == "__main__":
+    main("newtest.doc")
