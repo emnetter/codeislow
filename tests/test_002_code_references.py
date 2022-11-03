@@ -17,7 +17,7 @@ CODE_REGEX = {
     "CESEDA": r"(?P<CESEDA>Code\sde\sl'entrée\set\sdu\sséjour\sdes\sétrangers\set\sdu\sdroit\sd'asile|CESEDA)",
     "CGCT": r"(?P<CGCT>Code\sgénéral\sdes\scollectivités\sterritoriales|CGCT)",
     "CPCE": r"(?P<CPCE>Code\sdes\spostes\set\sdes\scommunications\sélectroniques|CPCE)",
-    "CENV": r"(?P<CENV>Code\sde\sl'environnement|C.\senvir.|\sCE\.?\s\.?)",
+    "CENV": r"(?P<CENV>Code\sde\sl'environnement|C.\senvir.|du\sCE(\.?|\s\.?))",
     "CJA": r"(?P<CJA>Code\sde\sjustice\sadministrative|CJA)",
 }
 
@@ -104,34 +104,37 @@ def get_short_code_from_full_name(full_name):
         return None
 
     
-def filter_code_regex(short_code_list):
+def filter_code_regex(selected_codes):
     """
-    Filter codes to match in document
+    Contruire l'expression régulière pour détecter les différents codes dans le document.
+
     Arguments:
-        code_list: [short_code, ...]
+        selected_codes: [short_code, ...]. Default: None (no filter)
     Returns:
         regex: string
     """
-    short_code_list = sorted(short_code_list)
-    if len(short_code_list) == 0:
+    if selected_codes is None:
         return "({})".format("|".join(list(CODE_REGEX.values())))
-    elif len(short_code_list) == 1:
-        return CODE_REGEX[short_code_list[0]]
-    else:
-        selected_code_dict = [CODE_REGEX[x] for x in short_code_list] 
-        return "({})".format("|".join(selected_code_dict))
 
-def filter_code_reference(short_code_list):
+     
+    if len(selected_codes) == 1:
+        return CODE_REGEX[selected_codes[0]]
+    else:
+        selected_code_list = [CODE_REGEX[x] for x in sorted(selected_codes)] 
+        return "({})".format("|".join(selected_code_list))
+
+def filter_code_reference(selected_codes=None):
     """
-    Filter code reference given a code_list 
+    Filtrer le dictionnaire de référence des codes
+
     Arguments:
-        code_list: [short_code, ...]
+        selected_codes: [short_code, ...]
     Returns:
-        filter_code_reference: selected CODE REFERENCE
+        code_reference_dict_filtered: filtered_CODE_REFERENCE
     """
-    if len(short_code_list)== 0:
+    if selected_codes is None:
         return CODE_REFERENCE
-    return {x: CODE_REFERENCE[x] for x in sorted(short_code_list)}
+    return {x: CODE_REFERENCE[x] for x in sorted(selected_codes)}
 
 class TestCodeFormats:
     @pytest.mark.parametrize("input", list(CODE_REFERENCE.keys()))
@@ -156,7 +159,7 @@ class TestCodeFormats:
         assert expected == result, result
         
         
-class TestFilterCode:
+class TestFilterRegexCode:
     def test_code_regex_match_code_ref(self):
         assert set(CODE_REFERENCE) - set(CODE_REGEX) == set()
     
@@ -182,6 +185,7 @@ class TestFilterCode:
         expected = "({})".format("|".join([CODE_REGEX[c] for c in random_code_list]))
         assert result == expected, result
     
+class TestFilterCodeReference:
     def test_filter_reference_empty(self):
         result = filter_code_reference([])
         assert result == CODE_REFERENCE
