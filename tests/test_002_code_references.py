@@ -80,8 +80,13 @@ def get_code_full_name_from_short_code(short_code):
     """
     try:
         return CODE_REFERENCE[short_code]
-    except ValueError:
-        return None
+
+    except KeyError:
+        
+        if get_short_code_from_full_name(short_code) is not None:
+            return short_code
+        else:
+            return None
 
 
 def get_short_code_from_full_name(full_name):
