@@ -16,13 +16,16 @@ from test_004_request import (
 
 from test_002_code_references import get_code_full_name_from_short_code
 
+
+### TIME CONVERSION UTILS
+
 def convert_date_to_datetime(date):
     return datetime.datetime.fromordinal(date.toordinal())
 
 
-# def convert_datetime_to_date(date_time):
-#     date_time.replace(hour=0, minute=0, second=0)
-#     return date_time
+def convert_datetime_to_date(date_time):
+    date_time.replace(hour=0, minute=0, second=0)
+    return date_time
 
 
 def convert_epoch_to_datetime(epoch):
@@ -47,18 +50,26 @@ def convert_datetime_to_str(date_time):
     return datetime.datetime.strftime(date_time, "%d/%m/%Y %H:%M:%S")
 
 
-# def convert_str_to_datetime(date_time):
-#     '''
-#     convert string format into datetime
-#     Arguments:
-#         date_str: string representation of a date
-#     Returns:
-#         date_time: datetime
-#     '''
-#     return datetime.datetime.strptime(date_time, "%d/%m/%Y %H:%M:%S")
+def convert_str_to_datetime(date_time):
+    '''
+    convert string format into datetime
+    Arguments:
+        date_str: string representation of a date
+    Returns:
+        date_time: datetime
+    '''
+    return datetime.datetime.strptime(date_time, "%d/%m/%Y %H:%M:%S")
 
 
 def time_delta(operator, year_nb):
+    """
+    Calculer le différentiel de date selon l'opérator et le nombre d'années
+    Arguments: 
+        operator: chaine de caractère qui représente l'opérateur: - ou +
+        year_nb: entier qui représente le nombre d'années
+    Return:
+        datetime_delta: objet datetime représentant la nouvelle date 
+    """
     if operator not in ["-", "+"]:
         raise ValueError("Wrong operator")
     if not isinstance(year_nb, int):
@@ -71,16 +82,25 @@ def time_delta(operator, year_nb):
 
 
 def time_delta_to_epoch(operator, year_nb):
+    """
+    Calculer le différentiel de date selon l'opérator et le nombre d'années
+    Arguments: 
+        operator: chaine de caractère qui représente l'opérateur: - ou +
+        year_nb: entier qui représente le nombre d'années
+    Return:
+        date_delta: timestamp représentant la nouvelle date 
+    """
+    
     return convert_datetime_to_epoch(time_delta(operator, year_nb))
 
 def get_validity_status(start, end, year_before, year_after):
     """
     Verifier la validité de l'article à partir d'une plage de temps
     Arguments:
-        year_before: entier qui correspond à un nombre d'année
-        start: Un object datetime représentant la date de création de l'article
+        year_before: Un entier qui correspond à un nombre d'année
+        start: Un objet datetime représentant la date de création de l'article
         year_after: entier représentant un nombre d'année
-        end: Un object datetime représentant la date de fin de validité de l'article
+        end: Un objet datetime représentant la date de fin de validité de l'article
 
     Returns:
         status_code: Un code de status qui s'inspire d'HTTP
@@ -95,7 +115,7 @@ def get_validity_status(start, end, year_before, year_after):
     if start < past_boundary and end > future_boundary:
         return (204, "Pas de modification", "green")
 
-
+### FULL INTEGRATION 
 def get_article(short_code_name, article_number, client_id, client_secret, past_year_nb=3, future_year_nb=3):
     """
     Accéder aux informations simplifiée de l'article
@@ -104,11 +124,10 @@ def get_article(short_code_name, article_number, client_id, client_secret, past_
         long_code_name: Nom du code de loi française dans sa version longue
         article_number: NUméro de l'article de loi normalisé ex. R25-67 L214 ou 2667-1-1
     Returns:
-        article: Un dictionnaire json avec code, article, status, status_code, color, url, text, id, start_date, end_date, date_debut, date_fin
-    
+        article: Un dictionnaire json avec code (version courte), article (numéro), status, status_code, color, url, text, id, start_date, end_date, date_debut, date_fin 
     """
     
-    article_tpl = {
+    article = {
         "code": short_code_name,
         "code_full_name": get_code_full_name_from_short_code(short_code_name),
         "article": article_number,
@@ -121,22 +140,22 @@ def get_article(short_code_name, article_number, client_id, client_secret, past_
             short_code_name, article_number, headers=get_legifrance_auth(client_id, client_secret)
         )
     }
-    if article_tpl["id"] is None:
-        article_tpl["color"] = "red"
-        article_tpl["status_code"] = 404
-        article_tpl["status"] = "Indisponible"
-        return article_tpl
+    if article["id"] is None:
+        article["color"] = "red"
+        article["status_code"] = 404
+        article["status"] = "Indisponible"
+        return article
     article_content = get_article_content(
-        article_tpl["id"], headers=get_legifrance_auth(client_id, client_secret)
+        article["id"], headers=get_legifrance_auth(client_id, client_secret)
     )
-    article_tpl["texte"] = article_content["texte"]
-    article_tpl["url"] = article_content["url"]
-    article_tpl["start_date"] = convert_epoch_to_datetime(article_content["dateDebut"])
-    article_tpl["end_date"] = convert_epoch_to_datetime(article_content["dateFin"])
-    article_tpl["status_code"], article_tpl["status"], article_tpl["color"] = get_validity_status(article_tpl["start_date"], article_tpl["end_date"], past_year_nb, future_year_nb)
-    article_tpl["date_debut"] = convert_datetime_to_str(article_tpl["start_date"]).split(" ")[0]
-    article_tpl["date_fin"] = convert_datetime_to_str(article_tpl["end_date"]).split(" ")[0]
-    return article_tpl
+    article["texte"] = article_content["texte"]
+    article["url"] = article_content["url"]
+    article["start_date"] = convert_epoch_to_datetime(article_content["dateDebut"])
+    article["end_date"] = convert_epoch_to_datetime(article_content["dateFin"])
+    article["status_code"], article["status"], article["color"] = get_validity_status(article["start_date"], article["end_date"], past_year_nb, future_year_nb)
+    article["date_debut"] = convert_datetime_to_str(article["start_date"]).split(" ")[0]
+    article["date_fin"] = convert_datetime_to_str(article["end_date"]).split(" ")[0]
+    return article
 
 
 
