@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% set active_page = "accueil" %}
+
+{% block page_title %}Accueil{% endblock %}
+{% block content %}
+
+<h1>Outil d'analyse de texte juridique</h1>
+
+<div class="card">
+<h4><b>Guide d'utilisation</b></h4>
+    <p>Soumettez le texte que vous souhaitez analyser <br>
+    au format DOC, DOCX ou ODT (de préférence) ou PDF.<br>
+    <span class="small">Le format PDF n'est pas toujours lisible. Les résultats peuvent être faussés.</span><br>
+    <span class="small">
+    Actuellement, la taille du fichier est limitée à 2 Mo</span>span>
+</p> 
+<p>Définissez la plage temporelle de surveillance pour les articles</p>
+<p>Selectionnez les codes qui vous concernent</p>
+
+<p>
+Le programme recherchera des références à des articles de code 
+(ex : "art. 1240 C. civ.", "article L. 110-1 du Code de commerce").</p><p> Il interrogera Légifrance à propos des articles détectés. 
+</p>
+    <ul class="list-group"> Vous saurez ainsi :
+    <li class="list-group-item">Si le texte est <span class="badge badge-pill badge-danger">introuvable</span> sur Légifrance (abrogé, faute de frappe, erreur de détection, de mention...)</li>
+    <li class="list-group-item">Si le texte a été <span class="badge badge-pill badge-primary">récemment modifié</span> (période définie par vous) (N.B. : seule la modification la plus récente est mentionnée)</li>
+    <li class="list-group-item">Si le texte va être <span class="badge badge-pill badge-warning">modifié prochainement</span> (période définie par vous) N.B. : seule la version à venir la plus proche est mentionnée)</li>
+    <li class="list-group-item">Si le texte <span class="badge badge-pill badge-success">n'a pas été modifié</span>(pendant la période définie)</li>
+</ul>
+</div>
+</p>
+{%endblock%}

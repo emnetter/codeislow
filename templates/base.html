@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="utf-8">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <title>Code is low {% block page_title %}{% endblock %}</title>
+</head>
+
+
+<body>
+    {% set navigation_bar = [
+        ('/', 'accueil', 'Accueil'),
+        ('/cgu/', 'CGU', 'CGU'),
+        ('/codes/', 'codes', 'Liste des codes'),
+        ('/about/', 'about', 'A propos'),
+        ] -%}
+        {% set active_page = active_page|default('index') -%}
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+            <a class="navbar-brand" href="/"><h1 style="margin-left:4%">Code is low</h1></a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+              <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+              <ul class="navbar-nav mr-auto">
+                {% for href, id, caption in navigation_bar %}
+                    <li class="nav _item{% if id == active_page %}active{% endif
+                    %} "">
+                    <a class="nav-link" href="{{ href|e }}">{{ caption|e }}</a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+          </nav>
+          <div class="main" style="margin-top:2%">
+          <div class="container text-center">
+            {% block content %}{% endblock %}
+            </div>
+        </div>
+        <footer style="margin:2%" class="d-flex flex-wrap justify-content-between align-items-center py-3 my-4 border-top">
+
+    <p class="">Un <a href="">programme expérimental</a> par <a href="">E. Netter</a> et <a href="">C. de Quatrebarbes</a></p>
+    <p>codeislow[at]email.enetter.fr</p> 
+    
+
+    <p>
+        Source : <a href="https://www.dila.premier-ministre.gouv.fr/" target="_blank" rel="noopener">DILA</a> - Données <a href="http://legifrance.gouv.fr">Légifrance</a> exploitées en
+        temps réel sous <a href="https://www.etalab.gouv.fr/wp-content/uploads/2017/04/ETALAB-Licence-Ouverte-v2.0.pdf" rel="noopener" target="_blank">licence ouverte 2.0</a>   
+    </p>
+  
+        </footer>
+    
+  
+</body>
+<script src="https://code.jquery.com/jquery-1.12.4.min.js" integrity="sha384-nvAa0+6Qg9clwYCGGPpDQLVpLNn0fRaROjHqs13t4Ggj3Ez50XnGQqc/r8MhnRDZ" crossorigin="anonymous"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/js/bootstrap.min.js" integrity="sha384-aJ21OjlMXNL5UyIl/XNwTMqvzeRMZH2w8c5cRVpzpU8Y5bApTppSuUkhZXN0VxHd" crossorigin="anonymous"></script>
+</html>
