@@ -1,7 +1,13 @@
 #!/usr/bin/env python
+# filename: parsing.py
 
-import pytest
-import os
+"""
+Parsing file module:
+
+Load document with the accepted extensions and transform into list of text
+
+"""
+
 
 import docx
 from PyPDF2 import PdfReader
@@ -13,15 +19,23 @@ ACCEPTED_EXTENSIONS = ("odt", "pdf", "docx", "doc")
 
 def parse_doc(file_path):
     """
-    Parsing document
-    Arguments:
-        file_path: a string representing the absolute filepath of the document
-    Returns:
-        full_text: a list of sentences
-    Raises:
-        Exception: Extension incorrecte. Les types de fichiers supportés sont odt, doc, docx, pdf
-        FileNotFoundError: File has not been found. File_path must be incorrect
+    Parcourir le document pour en extraire le texte 
+    Arguments
+    ----------
+    file_path: str 
+        absolute filepath of the document
+    Returns
+    ----------
+    full_text: array 
+        a list of sentences.
+    Raises
+    ----------
+    Exception: 
+        Extension incorrecte. Les types de fichiers supportés sont odt, doc, docx, pdf
+    FileNotFoundError: 
+        File has not been found. File_path must be incorrect
     """
+    
     doc_name, doc_ext = file_path.split("/")[-1].split(".")
     if doc_ext not in ACCEPTED_EXTENSIONS:
         raise ValueError(
