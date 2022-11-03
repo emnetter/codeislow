@@ -1,0 +1,56 @@
+<button onclick="document.getElementById('id01').style.display='block'" class="w3-button w3-circle w3-pale-yellow">&#9432;</button>
+    <div id="id01" class="w3-modal">
+        <div class="w3-modal-content w3-pale-yellow">
+            <div id="doc" class="w3-container w3-margin card ">
+                <div class="w3-container w3-margin w3-cell-row">
+                    <span onclick="document.getElementById('id01').style.display='none'" class="w3-button w3-display-topright">&times;</span>
+                    <h2 class="w3-cell">&#9432;</h2>
+
+                    <h4 class="w3-center w3-cell">
+                        <strong>Soyez informés du status des articles mentionnés dans votre document</strong>
+                    </h4>
+                </div>
+                <div class="w3-container w3-margin w3-cell-row">
+                    <div class="w3-left w3-cell">
+                        <p>A partir d'un <b>document</b> <small>(< 2 Mo</small> au format <code>docx</code>,
+                                    <code>odt</code> ou
+                                    <code>pdf</code>)</small></p>
+                        <p>
+                            le programme recherchera dans le texte <b>les références à des articles de code</b></p>
+                        <p> selon le format d'annotation utilisé dans le texte:</p>
+                        <ul class="w3-ul ">
+                            <li><b>ARTICLE - CODE</b>: ex: "art. 1240 C. civ.", "article L. 110-1 du Code de commerce".
+                            </li>
+                            <li><b>CODE - ARTICLE</b>: ex: "C. civ. art. 1240 ", "Code de commerce article L.
+                                    110-1".
+                                
+                            </li>
+                        </ul>
+                        <span class="w3-panel">
+                            Consultez la <a href="#codes">liste des codes du droit français supportés</a>
+                        </span>
+                        </p>
+                        <p>Il interrogera Légifrance à propos des articles détectés.
+                            En fonction de la <b>plage temporelle choisie</b>,
+                            vous saurez ainsi :</p>
+
+                        <ul>
+                            <li> Si le texte est <strong> <span class="w3-red">introuvable</span></strong> sur
+                                Légifrance
+                                (abrogé, faute de frappe, erreur de détection...) </li>
+                            <li> Si le texte a été <strong><span class="w3-yellow">récemment
+                                        modifié</span></span></strong>
+                                (période définie par vous) (N.B. : seule la modification la plus récente est mentionnée)
+                            </li>
+                            <li> Si le texte va être <strong><span class="w3-orange">modifié prochainement
+                                    </span></strong>
+                                (période définie par vous) N.B. : seule la version à venir la plus proche est
+                                mentionnée)</li>
+                            <li> Si le texte <span class="w3-green">n'a pas subi de modification</span></li>
+                        </ul>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
