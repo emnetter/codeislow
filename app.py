@@ -19,12 +19,13 @@ environment = Environment(loader=FileSystemLoader("templates/"))
 @app.route("/")
 def home():
     template = environment.get_template("home.html")
-    return template.render()
+    return template.render(code_names=list(CODE_REFERENCE.items()))
 
 @app.route("/home")
 def accueil():
+    
     template = environment.get_template("home.html")
-    return template.render()
+    return template.render(code_names=list(CODE_REFERENCE.items()))
 
 @app.route("/cgu/")
 def cgu():
@@ -52,8 +53,8 @@ def codes():
 #     template = environment.get_template("results.html")
 #     return template.render('results.html',
 #                            result=result)
-https://stackoverflow.com/questions/69125397/call-function-with-arguments-from-user-input-in-python3-flask-jinja2-template
-https://stackoverflow.com/questions/6036082/call-a-python-function-from-jinja2
+#https://stackoverflow.com/questions/69125397/call-function-with-arguments-from-user-input-in-python3-flask-jinja2-template
+#https://stackoverflow.com/questions/6036082/call-a-python-function-from-jinja2
 
 @app.route("/upload/", method="POST")
 def upload():
