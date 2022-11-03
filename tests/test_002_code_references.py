@@ -2,8 +2,8 @@ import pytest
 import random
 
 CODE_REGEX = {
-    "CCIV": r"(?P<CCIV>Code civil|C\.\sciv\.|Code\sciv\.|C\.civ\.|civ\.|CCIV)",
-    "CPRCIV": r"(?P<CPRCIV>Code\sde\sprocédure civile|C\.\spr\.\sciv\.|CPC)",
+    "CCIV": r"(?P<CCIV>Code\scivil|C\.\sciv\.|Code\sciv\.|C\.civ\.|civ\.|CCIV)",
+    "CPRCIV": r"(?P<CPRCIV>Code\sde\sprocédure\scivile|C\.\spr\.\sciv\.|CPC)",
     "CCOM": r"(?P<CCOM>Code\sde\scommerce|C\.\scom\.)",
     "CTRAV": r"(?P<CTRAV>Code\sdu\stravail|C\.\strav\.)",
     "CPI": r"(?P<CPI>Code\sde\sla\spropriété\sintellectuelle|CPI|C\.\spr\.\sint\.)",
@@ -11,13 +11,13 @@ CODE_REGEX = {
     "CPP": r"(?P<CPP>Code\sde\sprocédure\spénale|CPP)",
     "CASSUR": r"(?P<CASSUR>Code\sdes\sassurances|C\.\sassur\.)",
     "CCONSO": r"(?P<CCONSO>Code\sde\sla\sconsommation|C\.\sconso\.)",
-    "CSI": r"(?P<CSI>Code\sde\slasécurité intérieure|CSI)",
-    "CSP": r"(?P<CSP>Code\sde\slasanté publique|C\.\ssant\.\spub\.|CSP)",
-    "CSS": r"(?P<CSS>Code\sde\slasécurité sociale|C\.\ssec\.\ssoc\.|CSS)",
+    "CSI": r"(?P<CSI>Code\sde\slasécurité\sintérieure|CSI)",
+    "CSP": r"(?P<CSP>Code\sde\slasanté\spublique|C\.\ssant\.\spub\.|CSP)",
+    "CSS": r"(?P<CSS>Code\sde\slasécurité\ssociale|C\.\ssec\.\ssoc\.|CSS)",
     "CESEDA": r"(?P<CESEDA>Code\sde\sl'entrée\set\sdu\sséjour\sdes\sétrangers\set\sdu\sdroit\sd'asile|CESEDA)",
     "CGCT": r"(?P<CGCT>Code\sgénéral\sdes\scollectivités\sterritoriales|CGCT)",
     "CPCE": r"(?P<CPCE>Code\sdes\spostes\set\sdes\scommunications\sélectroniques|CPCE)",
-    "CENV": r"(?P<CENV>Code\sde\sl'environnement|C.\senvir.|du\sCE(\.?|\s\.?))",
+    "CENV": r"(?P<CENV>Code\sde\sl'environnement|C.\senvir.|CE\.)",
     "CJA": r"(?P<CJA>Code\sde\sjustice\sadministrative|CJA)",
 }
 

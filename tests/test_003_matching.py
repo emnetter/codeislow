@@ -3,7 +3,7 @@ import re
 import pytest
 
 from test_001_parsing import parse_doc
-from test_002_code_references import filter_code_regex, CODE_REFERENCE
+from test_002_code_references import filter_code_regex, CODE_REFERENCE, CODE_REGEX
 
 ARTICLE_REGEX = r"(?P<art>(Articles?|Art\.))"
 
@@ -171,33 +171,24 @@ def get_matching_result_item(full_text, selected_shortcodes=[], pattern_format="
 
 class TestMatching:
     def test_matching_result_dict_codes_no_filter_pattern_article_code(self):
+        # NO CPCE ref dans le doc
+        code_reference_test = CODE_REGEX
+        del code_reference_test["CPCE"]
+        
         file_paths = ["newtest.doc", "newtest.docx", "newtest.pdf"]
         for file_path in file_paths:
             abspath = os.path.join(
                 os.path.dirname(os.path.realpath(__file__)), file_path
             )
             full_text = parse_doc(abspath)
-            results_dict = get_matching_results_dict(full_text,None, "article_code")
+            results_dict = get_matching_results_dict(full_text, None, "article_code")
+            
+            
+            
+            # del code_reference_test["CPCE"]
             code_list = list(results_dict.keys())
-            assert len(code_list) == 16, len(code_list)
-            assert sorted(code_list) == [
-                "CASSUR",
-                "CCIV",
-                "CCOM",
-                "CCONSO",
-                "CENV",
-                "CESEDA",
-                "CGCT",
-                "CJA",
-                "CPEN",
-                "CPI",
-                "CPP",
-                "CPRCIV",
-                "CSI",
-                "CSP",
-                "CSS",
-                "CTRAV",
-            ], sorted(code_list)
+            assert len(code_list) == len(code_reference_test), set(code_reference_test)- set(code_list)
+            assert sorted(code_list) == sorted(code_reference_test), set(code_reference_test)- set(code_list)
             articles_detected = [
                 item for sublist in results_dict.values() for item in sublist
             ]
@@ -234,7 +225,29 @@ class TestMatching:
             assert results_dict["CGCT"] == ["L1424-71", "L1"], ("CGCT", results_dict["CGCT"])
             assert results_dict["CESEDA"] == ["L753-1", "12"], ("CESEDA", results_dict["CESEDA"])
     
-    def test_matching_result_dict_codes_filter_pattern_article_code(self):
+    def test_matching_result_dict_codes_unique_filter_pattern_article_code(self):
+        selected_codes = ["CASSUR"]
+        file_paths = ["newtest.doc", "newtest.docx", "newtest.pdf"]
+        for file_path in file_paths:
+            abspath = os.path.join(
+                os.path.dirname(os.path.realpath(__file__)), file_path
+            )
+            full_text = parse_doc(abspath)
+            results_dict = get_matching_results_dict(full_text,selected_codes, "article_code")
+            code_list = list(results_dict.keys())
+            assert len(code_list) == len(selected_codes), len(code_list)
+            assert sorted(code_list) == [
+                "CASSUR"
+            ], sorted(code_list)
+            # articles_detected = [
+                # item for sublist in results_dict.values() for item in sublist
+            # ]
+            # assert len(articles_detected) == 37, len(articles_detected)
+            assert results_dict["CASSUR"] == ["L385-2", "R343-4", "A421-13"], results_dict[
+                "CASSUR"
+            ]
+            
+    def test_matching_result_dict_codes_multiple_filter_pattern_article_code(self):
         selected_codes = ["CASSUR", "CENV", "CSI", "CCIV"]
         file_paths = ["newtest.doc", "newtest.docx", "newtest.pdf"]
         for file_path in file_paths:
