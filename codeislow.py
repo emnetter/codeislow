@@ -53,7 +53,7 @@ def load_result(file_path, selected_codes=None, pattern_format="article_code", p
         row = f"""
         <tr>
             <th scope="row"><a href='{article["url"]}'>{article["code"]} - {article["article"]}</a></th>
-            <td>{article["status"]}</td>
+            <td><span class="badge badge-pill badge-{article["color"]}">{article["status"]}</span></td>
             <td>{article["texte"]}</td>
             <td>{article["date_debut"]}-{article["date_fin"]}</td>
         <tr>

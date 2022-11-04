@@ -263,7 +263,7 @@ def get_article(short_code_name, article_number, client_id, client_secret, past_
         "article": article_number,
         "status_code": 200,
         "status": "OK",
-        "color": "text-secondary",
+        "color": "secondary",
         "url": "",
         "texte": "",
         "date_debut": "",
@@ -273,9 +273,10 @@ def get_article(short_code_name, article_number, client_id, client_secret, past_
         )
     }
     if article["id"] is None:
-        article["color"] = "red"
+        article["color"] = "danger"
         article["status_code"] = 404
         article["status"] = "Indisponible"
+        article["texte"] = "x"
         return article
     article_content = get_article_content(
         article["id"], headers=get_legifrance_auth(client_id, client_secret)
