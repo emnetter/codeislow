@@ -53,7 +53,11 @@ start_results="""<!DOCTYPE html>
 """
 end_results="""</tbody>
             </table>
-            
+        <a href="/" class="btn btn-primary" role="button">Nouvelle Analyse</a>
+        <a href="/" class="btn btn-info disabled"  role="button">Exporter au format csv</a>
+        <a href="/" class="btn btn-warning disabled" role="button">Signaler une erreur</a>
+        
+        
         </div>
         </div>
         <footer style="margin:2%" class="d-flex flex-wrap justify-content-between align-items-center py-3 my-4 border-top">
