@@ -62,10 +62,7 @@ def upload():
     if ext not in ('.doc','.docx','.odt', '.pdf'):
         return 'Le format du fichier est incorrect'
     file_path = os.path.join("tmp", upload.filename)
-    try:
-        upload.save(file_path)
-    except OSError:
-        pass
+    upload.save(file_path)
     past = int(request.forms.get('user_past'))
     future =  int(request.forms.get('user_future'))
     selected_codes = [short_name for short_name in CODE_REFERENCE.keys() if request.forms.get(short_name) is not None]
