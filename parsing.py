@@ -51,4 +51,5 @@ def parse_doc(file_path):
             for i in range(len(paragraphs)):
                 full_text.append((paragraphs[i].text))
     full_text = [n for n in full_text if n not in ["\n", "", " "]]
+    os.remove(file_path)
     return full_text
