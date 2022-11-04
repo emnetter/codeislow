@@ -5,12 +5,15 @@
 Main Bottle app
 
 """
-from bottle import Bottle
+import os
+import json
 
-from bottle import static_file, request
+from bottle import Bottle
+from bottle import request, static_file
 from jinja2 import Environment, FileSystemLoader
 from code_references import CODE_REFERENCE, CODE_REGEX
-from codeislow import main
+from codeislow import main, load_result
+from result_templates import start_results, end_results
 
 app = Bottle()
 
@@ -21,11 +24,6 @@ def home():
     template = environment.get_template("home.html")
     return template.render(code_names=list(CODE_REFERENCE.items()))
 
-@app.route("/home")
-def accueil():
-    
-    template = environment.get_template("home.html")
-    return template.render(code_names=list(CODE_REFERENCE.items()))
 
 @app.route("/cgu/")
 def cgu():
@@ -58,13 +56,34 @@ def codes():
 
 @app.route("/upload/", method="POST")
 def upload():
-    filename = request.args.get('upload')
-    past = request.args.get('past')
-    future =  request.args.get('future')
-    results = yield from main(filename, None, "article_code", past, future)
-    template = environment.get_template("results.html")
-    return template.render(results = results)
-
+    upload = request.files.get('upload')
+    name, ext = os.path.splitext(upload.filename)
+    
+    if ext not in ('.doc','.docx','.odt', '.pdf'):
+        return 'Le format du fichier est incorrect'
+    file_path = os.path.join("tmp", upload.filename)
+    try:
+        upload.save(file_path)
+    except OSError:
+        pass
+    past = int(request.forms.get('user_past'))
+    future =  int(request.forms.get('user_future'))
+    selected_codes = [short_name for short_name in CODE_REFERENCE.keys() if request.forms.get(short_name) is not None]
+    if len(selected_codes) == 0: 
+        selected_codes = None
+    yield start_results
+    for row in load_result(file_path, None, "article_code", past, future):
+        yield row
+    #     row = f'''
+    #         <tr scope="row"><a href='{article["url"]}'>{article["code"]} - {article["article"]}</a></tr>
+    #         <tr>{article["status"]}</tr>
+    #         <tr>{article["texte"]}</tr>
+    #         <tr></tr>
+    #     '''
+    # yield 
+        
+    yield end_results
+    
 if __name__ == "__main__":
 #    if os.environ.get("APP_LOCATION") == "heroku":
 #         SSLify(app)

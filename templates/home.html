@@ -31,7 +31,7 @@ Le programme recherchera des références à des articles de code
 </p>
 
 <div class="card">
-    <form action="/upload" class="form" method="post" enctype="multipart/form-data">
+    <form id="analyse" action="/upload/" class="form" method="post" enctype="multipart/form-data">
 
         <div class="form-group">
             <div class="row">
@@ -49,27 +49,23 @@ Le programme recherchera des références à des articles de code
             </div>
                 <div class="row">
             <div class="col-md-3">
-                    <input class="form-control" name="user_past" id="user_past" type="number" value="3" min="0" max="99">
-                    <label>an(s) dans le passé</label>
+                    <input class="form-control" name="user_past" id="past" type="number" value="3" min="0" max="99">
+                    <label for="past">an(s) dans le passé</label>
                 </div>
                 <div class="col-md-3">
-                    <input class="form-control" name="user_future" id="user_past" type="number" value="3" min="0"
+                    <input class="form-control" name="user_future" id="future" type="number" value="3" min="0"
                         max="99">
-                    <label>an(s) dans le futur</label>
+                    <label for="future">an(s) dans le futur</label>
                 </div>
             </div>
         </div>
         <fieldset>
             <legend>Sélectionner les codes à vérifier</legend>
-        
         {% for short, name in code_names %}
-        
             <div>
               <input type="checkbox" id="{{short}}" name="{{short}}" checked>
               <label for="{{short}}">{{name}}</label>
             </div>
-        
-        
         {%endfor%}
     </fieldset>
     <div class="form-check mb-2 mr-sm-2">

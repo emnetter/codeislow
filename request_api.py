@@ -10,12 +10,10 @@ Module pour requeter l'API
 """
 
 import requests
-import datetime
 import time
 from dotenv import load_dotenv
-import pytest
 from code_references import get_code_full_name_from_short_code
-from check_validity import convert_epoch_to_datetime, convert_datetime_to_str, get_validity_status, time_delta
+from check_validity import convert_epoch_to_datetime, convert_datetime_to_str, get_validity_status
 
 API_ROOT_URL = "https://sandbox-api.piste.gouv.fr/dila/legifrance-beta/lf-engine-app/"
 # API_ROOT_URL =  "https://api.piste.gouv.fr/dila/legifrance-beta/lf-engine-app/",
@@ -268,6 +266,8 @@ def get_article(short_code_name, article_number, client_id, client_secret, past_
         "color": "grey",
         "url": "",
         "texte": "",
+        "date_debut": "",
+        "date_fin": "",
         "id": get_article_uid(
             short_code_name, article_number, headers=get_legifrance_auth(client_id, client_secret)
         )
@@ -287,6 +287,8 @@ def get_article(short_code_name, article_number, client_id, client_secret, past_
     article["status_code"], article["status"], article["color"] = get_validity_status(article["start_date"], article["end_date"], past_year_nb, future_year_nb)
     article["date_debut"] = convert_datetime_to_str(article["start_date"]).split(" ")[0]
     article["date_fin"] = convert_datetime_to_str(article["end_date"]).split(" ")[0]
+    del article["start_date"]
+    del article["end_date"]
     return article
 
 
