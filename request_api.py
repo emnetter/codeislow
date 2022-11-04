@@ -263,7 +263,7 @@ def get_article(short_code_name, article_number, client_id, client_secret, past_
         "article": article_number,
         "status_code": 200,
         "status": "OK",
-        "color": "grey",
+        "color": "text-secondary",
         "url": "",
         "texte": "",
         "date_debut": "",
