@@ -6,13 +6,13 @@ Main Bottle app
 
 """
 import os
-import json
 
+from bottle_sslify import SSLify
 from bottle import Bottle
-from bottle import request, static_file
+from bottle import request
 from jinja2 import Environment, FileSystemLoader
 from code_references import CODE_REFERENCE, CODE_REGEX
-from codeislow import main, load_result
+from codeislow import load_result
 from result_templates import start_results, end_results
 
 app = Bottle()
@@ -82,8 +82,9 @@ def upload():
     yield end_results
     
 if __name__ == "__main__":
-#    if os.environ.get("APP_LOCATION") == "heroku":
-#         SSLify(app)
-#         app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
-#     else:
-    app.run(host="localhost", port=8080, reloader=True)
+    if os.environ.get("APP_LOCATION") == "heroku":
+        SSLify(app)
+        app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+
+    else:
+        app.run(host="localhost", port=8080, debug=True, reloader=True)
