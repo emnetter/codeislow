@@ -1,4 +1,3 @@
-TOKEN_URL=
-API_ROOT_URL=
-API_KEY=
-API_SECRET=
+API_KEY=xxxxxxxxxxxxxxxxxx
+API_SECRET=xxxxxxxxxxxxxxxxxx
+APP_LOCATION=
