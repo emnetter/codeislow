@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% set active_page = "codes" %}
+
+{% block page_title %}Codes{% endblock %}
+{% block content %}
+<h1>Liste des codes actuellement supportés</h1>
+<div class="card" style="margin-left:40%; width: 18rem;">
+    <div class="card-body">
+      <p class="card-text">Actuellement <h2><span class="badge badge-pill badge-success">{{codes_full_list|length}}</span></h2><b>codes de droit français</b> 
+      </p><p class="card-text">sont supportés à la détection dans leur forme abbrégée comme dans leur nom complet. La casse est indifférente</p>
+      <a href="#" class="btn btn-primary">Proposer un ajout</a>
+    </div>
+  </div>
+<div class="row" style="margin-top:2%"></div>
+<table class="table table-bordered table-striped">
+    <thead class="thead-dark">
+      <tr>
+        <th scope="col">Nom du Code</th>
+        <th scope="col">Abbréviation</th>
+        <th scope="col">Expression rationnelle</th>
+        <th scope="col">Commentaire</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for long_code, short_code, regex, comment in codes_full_list %} 
+      <tr>
+        <th>{{long_code}}</th>
+        <td>{{short_code}}</td>
+        <td>{{regex}}</td>
+        <td>{{comment}}</td>
+      </tr>
+      {%endfor%}
+    </tbody>
+  </table>
+{% endblock %}

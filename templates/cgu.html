@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% set active_page = "cgu" %}
+
+{% block page_title %}CGU{% endblock %}
+{% block content %}
+<h1>Conditions générales d'utilisation</h1>
+
+<p> Le développeur propose, <strong> à titre gracieux et non-professionnel</strong>, un outil <strong>
+    expérimental </strong> d'aide au traitement de textes juridiques. Il décline toute
+responsabilité pour le cas où les références à des articles de codes de droit français ne seraient
+pas correctement détectées. La responsabilité de l'exactitude des informations figurant sur la base
+de données <a href="https://www.legifrance.gouv.fr/">Légifrance</a> relève, quant à elle,
+exclusivement de la <a href="https://www.dila.premier-ministre.gouv.fr/">DILA</a>. Pour le surplus,
+l'utilisation de ce logiciel est soumise à la <a
+    href="https://cecill.info/licences/Licence_CeCILL_V2.1-fr.html">licence CeCILL</a>.</p>
+
+
+    <p>L'application web est proposée par E. Netter, à titre individuel, sans impliquer l'université à
+        laquelle il appartient. E. Netter est responsable du traitement des données à caractère personnel
+        que vos documents pourraient contenir, au sens du <a
+            href="https://www.cnil.fr/fr/rgpd-de-quoi-parle-t-on">règlement général sur la protection des
+            données</a> et de la <a href="https://www.cnil.fr/fr/la-loi-informatique-et-libertes">loi
+            informatique et libertés</a>. Le serveur est opéré par <a
+            href="http://www.heroku.com">Heroku</a>, qui occupe une position de sous-traitant des données,
+        rémunéré par E. Netter. Vos données sont traitées sur le fondement de la nécessité pour l'exécution
+        d'une prestation de service dont vous demandez à bénéficier (<a
+            href="https://www.cnil.fr/fr/reglement-europeen-protection-donnees/chapitre2#Article6">art. 6,
+            1, b RGPD</a>).
+    </p>
+
+    <h1>Politique de confidentialité</h1>
+    <p>Conformément <a href="https://github.com/emnetter/codeislow" target="_blank" rel="noopener">au code
+            source public</a>, votre document est copié dans un fichier provisoire uniquement le temps
+        d'être traité, puis supprimé (ligne "os.remove") avant même l'affichage des résultats. Au cas où la
+        suppression échouerait en raison d'un bug, les fichiers sont automatiquement détruits par Heroku
+        toutes les 24h, et le développeur s'engage à ne pas en prendre connaissance. Si vous souhaitez
+        cependant qu'il examine votre document afin de comprendre pourquoi un examen a échoué, vous pouvez
+        choisir de lui adresser, à l'adresse email située en bas de page. Il s'engage alors à ne
+        l'exploiter à aucune autre fin puis à la détruire. L'échange entre votre navigateur et le serveur
+        doit être chiffré. Si votre navigateur présente un cadenas ouvert ou indique que la connexion n'est
+        pas sécurisée, il s'agit d'un dysfonctionnement et l'outil ne devrait pas être utilisé.</p>
+
+    <p>Il est également possible de préférer à cette application web une exécution locale du <a
+            href="https://github.com/emnetter/codeislow">code source</a> sur votre propre système
+        informatique. C'est le mode vivement recommandé pour le cas où votre document contiendrait des
+        données confidentielles, particulièrement sensibles, ou soumises au secret professionnel.
+        Rapprochez-vous de la personne responsable de vos systèmes d'information. L'ouverture d'un <a
+            href="https://developer.aife.economie.gouv.fr/">compte développeur PISTE</a> (rapide et
+        gratuite) sera alors nécessaire.</p>
+
+    <p>Les droits qui vous sont reconnus par le RGPD et la LIL <a
+            href="https://enetter.fr/la-personne/chapitre-1-lidentite-numerique/section-2-la-protection-de-lidentite-numerique/ii-la-gestion-personnalisee-accessible-aux-individus/b-en-aval-de-la-collecte-des-donnees/">vous
+            sont présentés</a> par l'auteur sur son site de chercheur en droit.</p>
+
+    <p>Si vous estimez que vos droits ont été méconnus, je vous invite à me contacter avant toute autre
+        démarche, à l'adresse email figurant en haut de la page. Vous disposez du droit de déposer une
+        réclamation <a href="http://cnil.fr" target="_blank" rel="noopener noreferrer">auprès de la
+            CNIL</a>.</p>
+{% endblock %}
+
+
