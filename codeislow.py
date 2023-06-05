@@ -165,7 +165,7 @@ def get_article_id(article_number, code_name):
     }
 
     response = session.post(
-        "https://api.piste.gouv.fr/dila/legifrance-beta/lf-engine-app/search",
+        "https://api.piste.gouv.fr/dila/legifrance/lf-engine-app/search",
         headers=headers,
         json=data,
     )
@@ -184,7 +184,7 @@ def get_article_id(article_number, code_name):
 def get_article_content(article_id):
     data = {"id": article_id}
     response = session.post(
-        "https://api.piste.gouv.fr/dila/legifrance-beta/lf-engine-app/consult/getArticle",
+        "https://api.piste.gouv.fr/dila/legifrance/lf-engine-app/consult/getArticle",
         headers=headers,
         json=data,
     )
