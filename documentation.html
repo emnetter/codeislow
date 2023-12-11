@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang=fr>
+<head>
+
+    <head>
+        <title> Code is low - Guide d'utilisation</title>
+        <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+        <link rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+
+        <!-- jQuery library -->
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
+        <!-- Latest compiled JavaScript -->
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    </head>
+
+<body>
+    <div class="w3-container w3-blue-grey">
+        <h1><a href="/""> Code is low</a></h1>
+        <h5> Un programme expérimental par <a href="http://www.enetter.fr" target="_blank" rel="noopener">E. Netter</a>
+            (v. 0.8) - codeislow [at] email.enetter.fr </h5>
+        <p> <small> Source : <a href="https://www.dila.premier-ministre.gouv.fr/" target="_blank"
+                    rel="noopener">DILA</a> - Données <a href="http://legifrance.gouv.fr">Légifrance</a> exploitées en
+                temps réel sous <a
+                    href="https://www.etalab.gouv.fr/wp-content/uploads/2017/04/ETALAB-Licence-Ouverte-v2.0.pdf"
+                    rel="noopener" target="_blank">licence ouverte 2.0</a>. </small> </p>
+
+    </div>
+    
+    <nav class="w3-ul">
+        
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav">
+            <li class="nav-item active">
+              <a class="nav-link" href="/">Home <span class="sr-only">(current)</span></a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/cgu#cgu">Conditions d'utilisation</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/cgu#confidentialite">Politique de confidentialité</a>
+              </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/code_list">Liste des codes</a>
+            </li>
+            
+          </ul>
+        </div>
+      </nav>
+      <div class="container">
+    
+      <div class="container w3-margin">
+<div class="w3-container w3-margin w3-cell-row">
+    <span onclick="document.getElementById('id01').style.display='none'" class="w3-button w3-display-topright">&times;</span>
+    <h2 class="w3-cell">&#9432;</h2>
+
+    <h4 class="w3-center w3-cell">
+        <strong>Soyez informés du status des articles mentionnés dans votre document</strong>
+    </h4>
+</div>
+<div class="w3-container w3-margin w3-cell-row">
+    <div class="w3-left w3-cell">
+        <p>A partir d'un <b>document</b> <small>(< 2 Mo</small> au format <code>docx</code>,
+                    <code>odt</code> ou
+                    <code>pdf</code>)</small></p>
+        <p>
+            le programme recherchera dans le texte <b>les références à des articles de code</b></p>
+        <p> selon le format d'annotation utilisé dans le texte:</p>
+        <ul class="w3-ul ">
+            <li><b>ARTICLE - CODE</b>: ex: "art. 1240 C. civ.", "article L. 110-1 du Code de commerce".
+            </li>
+            <li><b>CODE - ARTICLE</b>: ex: "C. civ. art. 1240 ", "Code de commerce article L.
+                    110-1".
+                
+            </li>
+        </ul>
+        <span class="w3-panel">
+            Consultez la <a href="#codes">liste des codes du droit français supportés</a>
+        </span>
+        </p>
+        <p>Il interrogera Légifrance à propos des articles détectés.
+            En fonction de la <b>plage temporelle choisie</b>,
+            vous saurez ainsi :</p>
+
+        <ul>
+            <li> Si le texte est <strong> <span class="w3-red">introuvable</span></strong> sur
+                Légifrance
+                (abrogé, faute de frappe, erreur de détection...) </li>
+            <li> Si le texte a été <strong><span class="w3-yellow">récemment
+                        modifié</span></span></strong>
+                (période définie par vous) (N.B. : seule la modification la plus récente est mentionnée)
+            </li>
+            <li> Si le texte va être <strong><span class="w3-orange">modifié prochainement
+                    </span></strong>
+                (période définie par vous) N.B. : seule la version à venir la plus proche est
+                mentionnée)</li>
+            <li> Si le texte <span class="w3-green">n'a pas subi de modification</span></li>
+        </ul>
+        </p>
+    </div>
+</div>
+</div>
+</div>
+</div>
+</body>

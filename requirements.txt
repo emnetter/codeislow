@@ -6,3 +6,5 @@ requests==2.27.1
 pdfminer.six==20220524
 urllib3~=1.26.11
 PyPDF2~=2.10.2
+pytest~=7.2.0
+pytest-dotenv==0.5.2
